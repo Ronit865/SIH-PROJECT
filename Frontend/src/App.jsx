@@ -8,7 +8,7 @@ function App() {
 
   return (
     <>
-      <h1>This is the start of project.</h1>
+      <h1 className='bg-orange-600 text-white text-center text-6xl m-2 p-2'>This is the start of project.</h1>
     </>
   )
 }
