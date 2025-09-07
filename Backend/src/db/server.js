@@ -1,4 +1,5 @@
 import mongo from 'mongoose';
+import Admin from '../models/admin.models.js';
 // import { DB_NAME } from '../constant.js';
 
 const connectDB = async () => {
@@ -13,4 +14,5 @@ const connectDB = async () => {
     process.exit(1); // Exit the process with failure
   }
 }
+
 export default connectDB;

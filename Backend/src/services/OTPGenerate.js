@@ -18,7 +18,7 @@ export const sendOTPEmail = async (email, otp) => {
         
         const mailOptions = {
             from: {
-                name: 'VideoTube',
+                name: 'College Name',
                 address: process.env.EMAIL_USER
             },
             to: email,

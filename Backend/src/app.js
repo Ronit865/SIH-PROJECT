@@ -15,8 +15,11 @@ app.use(express.static('public'))  //sets files in public as static
 app.use(cookieParser()) //used for cookie reading
 
 
-//routes
-// import userRouter from './routes/user.routes.js';
-// app.use('/',userRouter)
+//Routes
+import userRouter from './routes/user.routes.js';
+import adminRouter from './routes/admin.routes.js';
+
+app.use('/admin',adminRouter)
+app.use('/',userRouter)
 
 export default app;

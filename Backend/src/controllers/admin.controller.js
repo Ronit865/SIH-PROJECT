@@ -1,53 +1,58 @@
-import asyncHandler from '../utils/asyncHandler.js';
-import User from '../models/user.models.js';
+import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from '../utils/ApiError.js';
-import { extractPublicId, uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
-import ApiResponse from '../utils/ApiResponse.js';
+import ApiResponse from "../utils/ApiResponse.js";
 import jwt from 'jsonwebtoken';
+import { extractPublicId, uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
+import Admin from "../models/admin.models.js";
+import User from "../models/user.models.js";
+import { verifyAdminJWT } from "../middlewares/auth.middleware.js";
 import otpGenerator from 'otp-generator';
 import { sendOTPEmail } from '../services/OTPGenerate.js';
-import mongoose from 'mongoose';
-import csv from 'csv-parser';
-import fs from 'fs';
-import path from 'path';
+import { parseCsv } from "../utils/csvParser.js";
 
-const generateAccessAndRefreshToken = async (userId) => {
+const generateAccessAndRefreshToken = async (adminId) => {
     try {
-        const user = await User.findById(userId);
-        const accessToken = await user.generateAccessToken();
-        const refreshToken = await user.generateRefreshToken();
-        user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });
+        const admin = await Admin.findById(adminId);
+        if (!admin) {
+            throw new ApiError(404, "Admin not found");
+        }
+        if (!admin.generateAccessToken || !admin.generateRefreshToken) {
+            throw new ApiError(500, "Token generation methods not implemented");
+        }
+        const accessToken = await admin.generateAccessToken();
+        const refreshToken = await admin.generateRefreshToken();
+        admin.refreshToken = refreshToken;
+        await admin.save({ validateBeforeSave: false });
         return { accessToken, refreshToken };
     } catch (err) {
         throw new ApiError(500, "Error generating Token")
     }
 };
 
-const loginUser = asyncHandler(async (req, res) => {
+const loginAdmin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
     if (!email) {
         throw new ApiError(400, "Email is required")
     }
 
-    const user = await User.findOne({
+    const admin = await Admin.findOne({
         $or: [{ email }]
     })
 
-    if (!user) {
-        throw new ApiError(404, "User not found")
+    if (!admin) {
+        throw new ApiError(404, "Admin not found")
     }
 
-    const isPasswordValid = await user.isPasswordCorrect(password)
+    const isPasswordValid = await admin.isPasswordCorrect(password)
 
     if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid Crendentials")
+        throw new ApiError(401, "Invalid Credentials")
     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id)
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(admin._id)
 
-    const loggedInUser = await User.findById(user._id).select('-password -refreshToken');
+    const loggedInAdmin = await Admin.findById(admin._id).select('-password -refreshToken');
 
     const options = {
         httpOnly: true,
@@ -58,15 +63,15 @@ const loginUser = asyncHandler(async (req, res) => {
         .status(200)
         .cookie('accessToken', accessToken, options)
         .cookie('refreshToken', refreshToken, options)
-        .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }));
+        .json(new ApiResponse(200, { admin: loggedInAdmin, accessToken, refreshToken }));
 
 });
 
-const logoutUser = asyncHandler(async (req, res) => {
+const logoutAdmin = asyncHandler(async (req, res) => {
 
-    await User.findByIdAndUpdate(
+    await Admin.findByIdAndUpdate(
 
-        req.user._id,
+        req.admin._id,
         {
             $unset: {
                 refreshToken: 1
@@ -99,13 +104,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     try {
         const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
 
-        const user = await User.findById(decodedToken?._id)
+        const admin = await Admin.findById(decodedToken?._id)
 
-        if (!user) {
+        if (!admin) {
             throw new ApiError(401, "Invalid refresh token");
         }
 
-        if (incomingRefreshToken !== user?.refreshToken) {
+        if (incomingRefreshToken !== admin?.refreshToken) {
             throw new ApiError(401, "Refresh token is expired");
         }
 
@@ -114,7 +119,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             secure: true,
         }
 
-        const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user._id)
+        const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(admin._id)
 
         return res
             .status(200)
@@ -136,10 +141,10 @@ const forgotPassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Email is required");
     }
 
-    const user = await User.findOne({ email });
+    const admin = await Admin.findOne({ email });
 
-    if (!user) {
-        throw new ApiError(404, "User not found");
+    if (!admin) {
+        throw new ApiError(404, "Admin not found");
     }
 
     // Generate OTP
@@ -152,15 +157,15 @@ const forgotPassword = asyncHandler(async (req, res) => {
         });
 
         // Store OTP and expiry in user document
-        user.resetPasswordOTP = otp;
-        user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
-        await user.save({ validateBeforeSave: false });
+        admin.resetPasswordOTP = otp;
+        admin.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+        await admin.save({ validateBeforeSave: false });
 
         // Send email with OTP
         const emailResult = await sendOTPEmail(email, otp);
 
         if (!emailResult.success) {
-            throw new Error('Failed to send OTP email');
+            throw new ApiError(500, 'Failed to send OTP email');
         }
 
     } catch (error) {
@@ -169,7 +174,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     }
     return res
         .status(200)
-        .json(ApiResponse(200, {}, "OTP sent to email successfully"))
+        .json(new ApiResponse(200, {}, "OTP sent to email successfully"))
 })
 
 const verifyOTP = asyncHandler(async (req, res) => {
@@ -179,18 +184,18 @@ const verifyOTP = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Email and OTP are required");
     }
 
-    const user = await User.findOne({
+    const admin = await Admin.findOne({
         email,
         resetPasswordOTP: otp,
         resetPasswordExpires: { $gt: Date.now() }
     });
 
-    if (!user) {
+    if (!admin) {
         throw new ApiError(400, "Invalid or expired OTP");
     }
 
     // OTP is valid, redirect to reset password page
-    return res.status(200).json("OTP verified ✅")
+    return res.status(200).json(new ApiResponse(200, {}, "OTP verified ✅"))
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
@@ -208,28 +213,28 @@ const resetPassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Password must be at least 6 characters long");
     }
 
-    const user = await User.findOne({
+    const admin = await Admin.findOne({
         email,
         resetPasswordOTP: token,
         resetPasswordExpires: { $gt: Date.now() }
     });
 
-    if (!user) {
+    if (!admin) {
         throw new ApiError(400, "Invalid or expired token");
     }
 
     // Reset password
-    user.password = newPassword;
-    user.resetPasswordOTP = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save({ validateBeforeSave: false });
+    admin.password = newPassword;
+    admin.resetPasswordOTP = undefined;
+    admin.resetPasswordExpires = undefined;
+    await admin.save({ validateBeforeSave: false });
 
     return res
         .status(200)
         .json(new ApiResponse(200, {}, "Password reset successfully"));
 });
 
-const changeUserPassword = asyncHandler(async (req, res) => {
+const changeAdminPassword = asyncHandler(async (req, res) => {
 
     const { oldPassword, newPassword } = req.body;
 
@@ -241,57 +246,23 @@ const changeUserPassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "New password must be different from old password");
     }
 
-    const user = await User.findById(req.user._id);
+    const admin = await Admin.findById(req.admin._id);
 
-    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+    const isPasswordCorrect = await admin.isPasswordCorrect(oldPassword)
     if (!isPasswordCorrect) {
         throw new ApiError(400, "Invalid old Password")
     }
 
-    user.password = newPassword;
+    admin.password = newPassword;
 
-    await user.save({ validateBeforeSave: false });
+    await admin.save({ validateBeforeSave: false });
 
     return res
         .status(200)
         .json(new ApiResponse(200, {}, "Password Changed Successfully"))
 })
 
-const getCurrentUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
-    return res
-        .status(200)
-        .json(new ApiResponse(200, user, "Current User Fetched Successfully"))
-});
-
-const updateUserDetails = asyncHandler(async (req, res) => {
-    const { currentPosition, company, location, phone, bio, linkedin, github } = req.body;
-
-    if (!currentPosition || !company || !location || !phone || !bio || !linkedin || !github) {
-        throw new ApiError(400, "All fields are required");
-    }
-
-    const user = await User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            $set: {
-                currentPosition,
-                company,
-                location,
-                phone,
-                bio,
-                linkedin,
-                github
-            }
-        },
-        { new: true }
-    ).select('-password -refreshToken');
-    return res
-        .status(200)
-        .json(new ApiResponse(200, user, "User Details Updated Successfully"))
-});
-
-const updateUserAvatar = asyncHandler(async (req, res) => {
+const updateAdminAvatar = asyncHandler(async (req, res) => {
 
     const avatarLocalPath = req.file?.path
 
@@ -305,8 +276,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Failed to upload avatar");
     }
 
-    const user = await User.findByIdAndUpdate(
-        req.user?._id,
+    const admin = await Admin.findByIdAndUpdate(
+        req.admin?._id,
         {
             $set: {
                 avatar: avatar.url
@@ -315,30 +286,44 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         { new: true }
     ).select('-password');
 
-    const oldAvatarPublicId = extractPublicId(req.user?.avatar);
+    const oldAvatarPublicId = extractPublicId(req.admin?.avatar);
 
-    if (!oldAvatarPublicId) {
-        throw new ApiError(500, 'Failed to extract public ID from avatar URL');
+    if (oldAvatarPublicId) {
+        try {
+            await deleteFromCloudinary(oldAvatarPublicId);
+        } catch (error) {
+            console.error('Failed to delete old avatar:', error);
+        }
     }
-
-    await deleteFromCloudinary(oldAvatarPublicId);
 
     return res
         .status(200)
-        .json(new ApiResponse(200, user, "Avatar Updated Successfully"))
+        .json(new ApiResponse(200, admin, "Avatar Updated Successfully"))
 
 })
 
+const addStudentCsv = asyncHandler(async (req, res) => {
+    if (!req.file) {
+        throw new ApiError(400, "CSV file is required");
+    }
+
+    // Process the CSV file and add users
+    const users = await parseCsv(req.file.path);
+    await User.insertMany(users);
+
+    return res
+        .status(201)
+        .json(new ApiResponse(201, {}, "Users added successfully"));
+})
+
 export {
-    loginUser,
-    logoutUser,
+    loginAdmin,
+    logoutAdmin,
     refreshAccessToken,
     forgotPassword,
-    resetPassword,
     verifyOTP,
-    changeUserPassword,
-    getCurrentUser,
-    updateUserDetails,
-    updateUserAvatar,
-};
-
+    resetPassword,
+    changeAdminPassword,
+    updateAdminAvatar,
+    addStudentCsv
+}
