@@ -3,8 +3,8 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from "../utils/ApiResponse.js";
 import jwt from 'jsonwebtoken';
 import { extractPublicId, uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
-import Admin from "../models/admin.models.js";
-import User from "../models/user.models.js";
+import Admin from "../models/admin.model.js";
+import User from "../models/user.model.js";
 import otpGenerator from 'otp-generator';
 import { sendOTPEmail } from '../services/OTPGenerate.js';
 import { parseCsv } from "../utils/csvParser.js";
@@ -315,6 +315,44 @@ const addStudentCsv = asyncHandler(async (req, res) => {
         .json(new ApiResponse(201, {}, "Users added successfully"));
 })
 
+const editUserDetails = asyncHandler(async (req, res) => {
+    const { _id } = req.params;
+    if (!_id) {
+        throw new ApiError(400, "User ID is required");
+    }
+
+    const { name, email, role, avatar, graduationYear , course , currentPosition , company , location , phone } = req.body;
+
+   try {
+     const user = await User.findByIdAndUpdate(_id, req.body,{
+         $set: {
+             name,
+             email,
+             role,
+             avatar,
+             graduationYear,
+             course,
+             currentPosition,
+             company,
+             location,
+             phone
+         }
+     } ,{ new: true });
+
+        if (!user) {
+           throw new ApiError(404, "User not found");
+       }
+
+         return res
+              .status(200)
+                .json(new ApiResponse(200, user, "User details updated successfully"));
+   } catch (error) {
+     throw new ApiError(500, "Internal Server Error");
+   }
+})
+
+
+
 export {
     loginAdmin,
     logoutAdmin,
@@ -324,5 +362,6 @@ export {
     resetPassword,
     changeAdminPassword,
     updateAdminAvatar,
-    addStudentCsv
+    addStudentCsv,
+    editUserDetails
 }

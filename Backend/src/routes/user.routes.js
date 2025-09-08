@@ -2,7 +2,7 @@ import express from 'express';
 import { changeUserPassword, forgotPassword, getCurrentUser, loginUser, logoutUser, refreshAccessToken, resetPassword, updateUserAvatar,  updateUserDetails, verifyOTP } from '../controllers/user.controller.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
-import User from '../models/user.models.js';
+import User from '../models/user.model.js';
 
 const router = express.Router();
 

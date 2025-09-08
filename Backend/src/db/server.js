@@ -1,5 +1,4 @@
 import mongo from 'mongoose';
-import Admin from '../models/admin.models.js';
 // import { DB_NAME } from '../constant.js';
 
 const connectDB = async () => {
