@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 import { extractPublicId, uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import Admin from "../models/admin.models.js";
 import User from "../models/user.models.js";
-import { verifyAdminJWT } from "../middlewares/auth.middleware.js";
 import otpGenerator from 'otp-generator';
 import { sendOTPEmail } from '../services/OTPGenerate.js';
 import { parseCsv } from "../utils/csvParser.js";
