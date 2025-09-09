@@ -1,6 +1,5 @@
 import fs from 'fs';
 import csv from 'csv-parser';
-import bcrypt from 'bcryptjs';
 
 export const parseCsv = (filePath) => {
     return new Promise((resolve, reject) => {
@@ -56,7 +55,8 @@ const processRow = async (row) => {
             password: row.password || 'defaultPassword123',
             role: row.role || 'student',
             avatar: row.avatar || '',
-            graduationCourse: row.graduationcourse || row.course,
+            graduationYear: row.graduationYear || null,
+            course: row.course || row.course,
             currentPosition: row.currentPosition,
             company: row.company,
             location: row.location,
@@ -74,10 +74,7 @@ const processRow = async (row) => {
             return null;
         }
 
-        // Hash the password
-        const saltRounds = 10;
-        user.password = await bcrypt.hash(user.password, saltRounds);
-
+      
         return user;
     } catch (error) {
         console.error('Error processing row:', row, error);

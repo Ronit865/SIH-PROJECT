@@ -18,8 +18,10 @@ app.use(cookieParser()) //used for cookie reading
 //Routes
 import userRouter from './routes/user.routes.js';
 import adminRouter from './routes/admin.routes.js';
+import eventRouter from './routes/events.routes.js';
 
 app.use('/admin',adminRouter)
-app.use('/',userRouter)
+app.use('/events',eventRouter)
+app.use('/user',userRouter)
 
 export default app;

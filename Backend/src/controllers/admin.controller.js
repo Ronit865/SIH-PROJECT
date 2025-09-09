@@ -324,7 +324,7 @@ const editUserDetails = asyncHandler(async (req, res) => {
     const { name, email, role, avatar, graduationYear , course , currentPosition , company , location , phone } = req.body;
 
    try {
-     const user = await User.findByIdAndUpdate(_id, req.body,{
+     const user = await User.findByIdAndUpdate(_id,{
          $set: {
              name,
              email,
@@ -344,14 +344,12 @@ const editUserDetails = asyncHandler(async (req, res) => {
        }
 
          return res
-              .status(200)
+                .status(200)
                 .json(new ApiResponse(200, user, "User details updated successfully"));
    } catch (error) {
      throw new ApiError(500, "Internal Server Error");
    }
 })
-
-
 
 export {
     loginAdmin,
