@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api", // goes through Vite proxy
+  // baseURL: "/", // goes through Vite proxy
+  baseURL: "http://localhost:5000",
   withCredentials: true,
 });
 

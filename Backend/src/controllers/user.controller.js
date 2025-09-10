@@ -169,7 +169,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     }
     return res
         .status(200)
-        .json(ApiResponse(200, {}, "OTP sent to email successfully"))
+        .json(new ApiResponse(200, {}, "OTP sent to email successfully"))
 })
 
 const verifyOTP = asyncHandler(async (req, res) => {
@@ -190,13 +190,13 @@ const verifyOTP = asyncHandler(async (req, res) => {
     }
 
     // OTP is valid, redirect to reset password page
-    return res.status(200).json("OTP verified ✅")
+    return res.status(200).json(200,{},"OTP verified ✅")
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-    const { email, token, newPassword, confirmPassword } = req.body;
+    const { email ,newPassword, confirmPassword , otp } = req.body;
 
-    if (!email || !token || !newPassword || !confirmPassword) {
+    if (!email || !newPassword || !confirmPassword ||!otp) {
         throw new ApiError(400, "All fields are required");
     }
 
@@ -210,7 +210,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 
     const user = await User.findOne({
         email,
-        resetPasswordOTP: token,
+        resetPasswordOTP: otp,  //token original
         resetPasswordExpires: { $gt: Date.now() }
     });
 

@@ -1,50 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
-import Sidebar from "./components/Sidebar";
-import Topbar from "./components/Topbar";
-import DashboardPage from "./pages/DashboardPage";
-import AlumniPage from "./pages/AlumniPage";
-import EventPage from "./pages/EventPage";
-import DonationPage from "./pages/DonationPage";
-import ReportsPage from "./pages/ReportsPage";
-import SettingsPage from "./pages/SettingsPage";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import LoginPage from './pages/Auth/LoginPage';
+import ForgotPassword from './pages/Auth/ForgotPassword';
+import OtpVerification from './pages/Auth/OtpVerification';
+import ResetPassword from './pages/Auth/ResetPassword';
 
 function App() {
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(darkMode));
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
   return (
-    <div className={`flex h-screen transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900' : 'bg-gray-50'
-    }`}>
-      <Sidebar darkMode={darkMode} />
-      <div className="flex flex-col flex-1 overflow-hidden lg:ml-0 ml-0">
-        <Topbar darkMode={darkMode} setDarkMode={setDarkMode} />
-        <main className={`flex-1 overflow-y-auto p-4 lg:p-6 transition-colors duration-300 ${
-          darkMode ? 'bg-gray-900' : 'bg-gray-50'
-        }`}>
+    <Router>
+      <AuthProvider>
+        <div className="App">
           <Routes>
-            <Route path="/" element={<DashboardPage darkMode={darkMode} />} />
-            <Route path="/alumni" element={<AlumniPage darkMode={darkMode} />} />
-            <Route path="/events" element={<EventPage darkMode={darkMode} />} />
-            <Route path="/donations" element={<DonationPage darkMode={darkMode} />} />
-            <Route path="/reports" element={<ReportsPage darkMode={darkMode} />} />
-            <Route path="/settings" element={<SettingsPage darkMode={darkMode} setDarkMode={setDarkMode} />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/otp-verification" element={<OtpVerification />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/" element={<LoginPage />} />
           </Routes>
-        </main>
-      </div>
-    </div>
+        </div>
+      </AuthProvider>
+    </Router>
   );
 }
 
