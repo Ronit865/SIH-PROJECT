@@ -63,22 +63,12 @@ const ResetPasswordForm = ({ email, otp, onSuccess }) => {
     }
   };
 
-  const handleBack = () => {
-    return navigateToOTPVerification(email);
-  };
-
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-8 shadow-xl border border-slate-700 w-full max-w-md">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={handleBack}
-            className="flex items-center text-slate-400 hover:text-white mb-4 transition-colors"
-          >
-            <ArrowLeftIcon className="h-5 w-5 mr-2" />
-            Back
-          </button>
+         
           <h1 className="text-3xl font-bold text-white mb-2">Reset Password</h1>
           <p className="text-slate-400">
             Enter your new password for{' '}
