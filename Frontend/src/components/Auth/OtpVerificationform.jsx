@@ -88,13 +88,7 @@ const OtpVerificationForm = () => {
     if (!validateForm()) return;
     
     const otpString = otp.join('');
-      console.log('=== OTP Verification Debug ===');
-  console.log('Email from location.state:', email);
-  console.log('OTP entered:', otpString);
-  console.log('OTP length:', otpString.length);
-  console.log('OTP type:', typeof otpString);
-  console.log('Expected OTP from DB: 571543');
-  console.log('================================');
+    
     
     try {
     const result = await verifyOTP(email, otpString);
