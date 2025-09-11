@@ -2,13 +2,13 @@ import express from 'express';
 import { upload } from '../middlewares/multer.middleware.js';
 import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
 
-import { addStudentCsv, changeAdminPassword, editUserDetails, forgotPassword, loginAdmin, logoutAdmin, resetPassword, updateAdminAvatar, verifyOTP } from '../controllers/admin.controller.js';
+import { addStudentCsv, changeAdminPassword, editUserDetails, forgotPassword,  resetPassword, updateAdminAvatar, verifyOTP } from '../controllers/admin.controller.js';
 
 const router = express.Router();
 
-router.route("/Adminlogin").post(loginAdmin)
+// router.route("/Adminlogin").post(loginAdmin)
 
-router.route("/Adminlogout").post(verifyAdminJWT, logoutAdmin)
+// router.route("/Adminlogout").post(verifyAdminJWT, logoutAdmin)
 
 router.route("/addcsv").post(verifyAdminJWT, upload.single("csv"), addStudentCsv)
 

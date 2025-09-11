@@ -26,7 +26,7 @@ export const useAuthNavigation = () => {
   };
 
   const navigateToDashboard = () => {
-    const from = location.state?.from?.pathname || '/dashboard';
+    const from = location.state?.from?.pathname || '/AdminDashboard';
     navigate(from, { replace: true });
   };
 

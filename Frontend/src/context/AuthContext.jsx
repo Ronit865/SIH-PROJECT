@@ -7,15 +7,18 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userType, setUserType] = useState(null);
 
   useEffect(() => {
     // Check for existing token on app load
-    const savedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const savedToken = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    const savedUserType = localStorage.getItem('userType') || sessionStorage.getItem('userType');
     
     if (savedToken && savedUser) {
       setToken(savedToken);
       setUser(JSON.parse(savedUser));
+      setUserType(savedUserType);
       setIsAuthenticated(true);
     }
     
@@ -31,8 +34,12 @@ export const AuthProvider = ({ children }) => {
     setUser,
     token,
     setToken,
+    userType,
+    setUserType,
     isAuthenticated,
-    loading
+    loading,
+    setIsAuthenticated,
+    setLoading
   };
 
   return (

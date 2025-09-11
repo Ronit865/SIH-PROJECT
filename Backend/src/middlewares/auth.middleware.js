@@ -14,7 +14,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
             throw new ApiError(401, "Unauthorized Request")
         }
         const decodeToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-        
+
         const user = await User.findById(decodeToken?._id).select("-password -refreshToken")
         console.log('user:', user);
 
@@ -27,7 +27,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         throw new ApiError(401, "AuthMiddleware error", err);
         // return res.redirect('/login?error=Authentication%20required');
     }
-    
+
 })
 export const verifyAdminJWT = asyncHandler(async (req, res, next) => {
     try {
@@ -37,7 +37,7 @@ export const verifyAdminJWT = asyncHandler(async (req, res, next) => {
             throw new ApiError(401, "Unauthorized Request")
         }
         const decodeToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-        
+
         const admin = await Admin.findById(decodeToken?._id).select("-password -refreshToken")
 
         if (!admin) {
@@ -49,3 +49,20 @@ export const verifyAdminJWT = asyncHandler(async (req, res, next) => {
         throw new ApiError(401, "AuthMiddleware error", err);
     }
 })
+export const verifyUserOrAdmin = (req, res, next) => {
+    verifyJWT(req, res, (err) => {
+        if (!err) {
+            return next();
+        }
+
+        verifyAdminJWT(req, res, (adminErr) => {
+            if (!adminErr) {
+                return next();
+            }
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required"
+            });
+        });
+    });
+};

@@ -28,70 +28,70 @@ const generateAccessAndRefreshToken = async (adminId) => {
     }
 };
 
-const loginAdmin = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+// const loginAdmin = asyncHandler(async (req, res) => {
+//     const { email, password } = req.body;
 
-    if (!email) {
-        throw new ApiError(400, "Email is required")
-    }
+//     if (!email) {
+//         throw new ApiError(400, "Email is required")
+//     }
 
-    const admin = await Admin.findOne({
-        $or: [{ email }]
-    })
+//     const admin = await Admin.findOne({
+//         $or: [{ email }]
+//     })
 
-    if (!admin) {
-        throw new ApiError(404, "Admin not found")
-    }
+//     if (!admin) {
+//         throw new ApiError(404, "Admin not found")
+//     }
 
-    const isPasswordValid = await admin.isPasswordCorrect(password)
+//     const isPasswordValid = await admin.isPasswordCorrect(password)
 
-    if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid Credentials")
-    }
+//     if (!isPasswordValid) {
+//         throw new ApiError(401, "Invalid Credentials")
+//     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(admin._id)
+//     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(admin._id)
 
-    const loggedInAdmin = await Admin.findById(admin._id).select('-password -refreshToken');
+//     const loggedInAdmin = await Admin.findById(admin._id).select('-password -refreshToken');
 
-    const options = {
-        httpOnly: true,
-        secure: false,
-    }
+//     const options = {
+//         httpOnly: true,
+//         secure: false,
+//     }
 
-    return res
-        .status(200)
-        .cookie('accessToken', accessToken, options)
-        .cookie('refreshToken', refreshToken, options)
-        .json(new ApiResponse(200, { admin: loggedInAdmin, accessToken, refreshToken }));
+//     return res
+//         .status(200)
+//         .cookie('accessToken', accessToken, options)
+//         .cookie('refreshToken', refreshToken, options)
+//         .json(new ApiResponse(200, { admin: loggedInAdmin, accessToken, refreshToken }));
 
-});
+// });
 
-const logoutAdmin = asyncHandler(async (req, res) => {
+// const logoutAdmin = asyncHandler(async (req, res) => {
 
-    await Admin.findByIdAndUpdate(
+//     await Admin.findByIdAndUpdate(
 
-        req.admin._id,
-        {
-            $unset: {
-                refreshToken: 1
-            },
-        },
-        {
-            new: true
-        }
-    )
+//         req.admin._id,
+//         {
+//             $unset: {
+//                 refreshToken: 1
+//             },
+//         },
+//         {
+//             new: true
+//         }
+//     )
 
-    const options = {
-        httpOnly: true,
-        secure: false,
-    }
+//     const options = {
+//         httpOnly: true,
+//         secure: false,
+//     }
 
-    return res
-        .status(200)
-        .clearCookie('accessToken', options)
-        .clearCookie('refreshToken', options)
-        .json(new ApiResponse(200, {}, "Logged out successfully"))
-});
+//     return res
+//         .status(200)
+//         .clearCookie('accessToken', options)
+//         .clearCookie('refreshToken', options)
+//         .json(new ApiResponse(200, {}, "Logged out successfully"))
+// });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
@@ -352,8 +352,7 @@ const editUserDetails = asyncHandler(async (req, res) => {
 })
 
 export {
-    loginAdmin,
-    logoutAdmin,
+   
     refreshAccessToken,
     forgotPassword,
     verifyOTP,

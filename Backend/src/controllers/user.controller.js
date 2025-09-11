@@ -6,10 +6,7 @@ import ApiResponse from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
 import otpGenerator from 'otp-generator';
 import { sendOTPEmail } from '../services/OTPGenerate.js';
-import mongoose from 'mongoose';
-import csv from 'csv-parser';
-import fs from 'fs';
-import path from 'path';
+
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -24,70 +21,70 @@ const generateAccessAndRefreshToken = async (userId) => {
     }
 };
 
-const loginUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+// const loginUser = asyncHandler(async (req, res) => {
+//     const { email, password } = req.body;
 
-    if (!email) {
-        throw new ApiError(400, "Email is required")
-    }
+//     if (!email) {
+//         throw new ApiError(400, "Email is required")
+//     }
 
-    const user = await User.findOne({
-        $or: [{ email }]
-    })
+//     const user = await User.findOne({
+//         $or: [{ email }]
+//     })
 
-    if (!user) {
-        throw new ApiError(404, "User not found")
-    }
+//     if (!user) {
+//         throw new ApiError(404, "User not found")
+//     }
 
-    const isPasswordValid = await user.isPasswordCorrect(password)
+//     const isPasswordValid = await user.isPasswordCorrect(password)
 
-    if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid Crendentials")
-    }
+//     if (!isPasswordValid) {
+//         throw new ApiError(401, "Invalid Crendentials")
+//     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id)
+//     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id)
 
-    const loggedInUser = await User.findById(user._id).select('-password -refreshToken');
+//     const loggedInUser = await User.findById(user._id).select('-password -refreshToken');
 
-    const options = {
-        httpOnly: true,
-        secure: false,
-    }
+//     const options = {
+//         httpOnly: true,
+//         secure: false,
+//     }
 
-    return res
-        .status(200)
-        .cookie('accessToken', accessToken, options)
-        .cookie('refreshToken', refreshToken, options)
-        .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }));
+//     return res
+//         .status(200)
+//         .cookie('accessToken', accessToken, options)
+//         .cookie('refreshToken', refreshToken, options)
+//         .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }));
 
-});
+// });
 
-const logoutUser = asyncHandler(async (req, res) => {
+// const logoutUser = asyncHandler(async (req, res) => {
 
-    await User.findByIdAndUpdate(
+//     await User.findByIdAndUpdate(
 
-        req.user._id,
-        {
-            $unset: {
-                refreshToken: 1
-            },
-        },
-        {
-            new: true
-        }
-    )
+//         req.user._id,
+//         {
+//             $unset: {
+//                 refreshToken: 1
+//             },
+//         },
+//         {
+//             new: true
+//         }
+//     )
 
-    const options = {
-        httpOnly: true,
-        secure: false,
-    }
+//     const options = {
+//         httpOnly: true,
+//         secure: false,
+//     }
 
-    return res
-        .status(200)
-        .clearCookie('accessToken', options)
-        .clearCookie('refreshToken', options)
-        .json(new ApiResponse(200, {}, "Logged out successfully"))
-});
+//     return res
+//         .status(200)
+//         .clearCookie('accessToken', options)
+//         .clearCookie('refreshToken', options)
+//         .json(new ApiResponse(200, {}, "Logged out successfully"))
+// });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
@@ -190,7 +187,9 @@ const verifyOTP = asyncHandler(async (req, res) => {
     }
 
     // OTP is valid, redirect to reset password page
-    return res.status(200).json(200,{},"OTP verified ✅")
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{},"OTP verified ✅"))
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
@@ -330,8 +329,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 })
 
 export {
-    loginUser,
-    logoutUser,
     refreshAccessToken,
     forgotPassword,
     resetPassword,

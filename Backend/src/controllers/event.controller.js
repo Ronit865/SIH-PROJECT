@@ -77,9 +77,9 @@ const userEventJoin = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Unauthorized: Please log in");
     }
 
-    const { _id } = req.params;
+    const { eventID } = req.params;
 
-    if (!_id) {
+    if (!eventID) {
         throw new ApiError(400, "Event ID is required");
     }
 
@@ -112,8 +112,8 @@ const userEventLeave = asyncHandler(async (req, res) => {
     if (!user) {
         throw new ApiError(401, "Unauthorized: Please log in");
     }
-    const { _id } = req.params;
-    if (!_id) {
+    const {eventID } = req.params;
+    if (!eventID) {
         throw new ApiError(400, "Event ID is required");
     }
     try {

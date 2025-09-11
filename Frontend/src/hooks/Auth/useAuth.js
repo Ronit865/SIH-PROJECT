@@ -1,11 +1,25 @@
 import { useState, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { authService } from '../../services/authServices';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { setUser, setToken } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const { 
+    user, 
+    setUser, 
+    token, 
+    setToken, 
+    userType, 
+    setUserType, 
+    isAuthenticated, 
+    setIsAuthenticated,
+    loading: contextLoading 
+  } = useContext(AuthContext);
 
   const login = async (email, password, rememberMe = false) => {
     setLoading(true);
@@ -15,17 +29,22 @@ export const useAuth = () => {
       const response = await authService.login(email, password);
       
       if (response.success) {
-        setUser(response.data.user);
-        setToken(response.data.token);
+        const { user: userData, accessToken, userType: responseUserType } = response.data;
         
-        // Store in localStorage if remember me is checked
-        if (rememberMe) {
-          localStorage.setItem('token', response.data.token);
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        } else {
-          sessionStorage.setItem('token', response.data.token);
-          sessionStorage.setItem('user', JSON.stringify(response.data.user));
-        }
+        setUser(userData);
+        setToken(accessToken);
+        setUserType(responseUserType);
+        setIsAuthenticated(true);
+        
+        // Store in localStorage or sessionStorage based on rememberMe
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('accessToken', accessToken);
+        storage.setItem('user', JSON.stringify(userData));
+        storage.setItem('userType', responseUserType);
+        
+        // Navigate to intended page or dashboard
+        const from = location.state?.from?.pathname || '/dashboard';
+        navigate(from, { replace: true });
         
         return response.data;
       }
@@ -38,19 +57,35 @@ export const useAuth = () => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      // Clear state regardless of API call success
+      setUser(null);
+      setToken(null);
+      setUserType(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userType');
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('userType');
+      navigate('/login', { replace: true });
+    }
   };
 
   return {
+    user,
+    token,
+    userType,
+    isAuthenticated,
     login,
     logout,
-    loading,
+    loading: loading || contextLoading,
     error,
     setError
   };
