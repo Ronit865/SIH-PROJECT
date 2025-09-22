@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { authService, handleApiError, handleApiSuccess } from "@/services/ApiServices";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -22,6 +22,7 @@ export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -34,22 +35,44 @@ export const Login = () => {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      // Replace with your custom backend API call
-      console.log("Login data:", data);
+      const response = await authService.login(data);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (response.success) {
+        const successData = handleApiSuccess(response);
+        
+        // Store tokens - adjust based on your actual response structure
+        if (response.data?.accessToken) {
+          localStorage.setItem('accessToken', response.data.accessToken);
+        }
+        
+        toast({
+          title: "Login successful",
+          description: successData.message || "Welcome back!",
+        });
+        
+        // Navigate to dashboard
+        navigate('/');
+      }
+    } catch (error: any) {
+      const apiError = handleApiError(error);
       
-      toast({
-        title: "Login successful",
-        description: "Welcome back!",
-      });
-    } catch (error) {
       toast({
         title: "Login failed",
-        description: "Please check your credentials and try again.",
+        description: apiError.message,
         variant: "destructive",
       });
+      
+      // Handle specific error cases
+      if (apiError.statusCode === 401) {
+        console.log("Invalid credentials");
+      } else if (apiError.statusCode === 404) {
+        console.log("User not found");
+      }
+      
+      // Log detailed errors for debugging
+      if (apiError.errors.length > 0) {
+        console.log("Validation errors:", apiError.errors);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -84,6 +107,7 @@ export const Login = () => {
                             type="email"
                             placeholder="Enter your email"
                             className="pl-10"
+                            disabled={isLoading}
                           />
                         </div>
                       </FormControl>
@@ -106,6 +130,7 @@ export const Login = () => {
                             type={showPassword ? "text" : "password"}
                             placeholder="Enter your password"
                             className="pl-10 pr-10"
+                            disabled={isLoading}
                           />
                           <Button
                             type="button"
@@ -128,30 +153,20 @@ export const Login = () => {
                 />
 
                 <div className="flex items-center justify-between">
-                  <Link
-                    to="/auth/forgot-password"
-                    className="text-sm text-primary hover:underline"
-                  >
+                  <Link to="/auth/forgot-password" className="text-sm text-primary hover:underline">
                     Forgot password?
                   </Link>
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
+                <Button 
+                  type="submit" 
+                  className="w-full gradient-primary text-primary-foreground"
                   disabled={isLoading}
                 >
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </Form>
-
-            <div className="mt-6 text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link to="/auth/register" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>
