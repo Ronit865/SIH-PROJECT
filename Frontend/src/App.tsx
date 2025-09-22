@@ -17,6 +17,7 @@ import { Login } from "./pages/auth/Login";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { OTPVerification } from "./pages/auth/OTPVerification";
 import { ResetPassword } from "./pages/auth/ResetPassword";
+import { AuthProvider } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
 
