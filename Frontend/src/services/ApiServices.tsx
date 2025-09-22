@@ -147,7 +147,7 @@ export const adminService = {
       newPassword, 
       otp 
     });
-    return response;
+    return response.data;
   }
 };
 
