@@ -321,7 +321,7 @@ const editUserDetails = asyncHandler(async (req, res) => {
         throw new ApiError(400, "User ID is required");
     }
 
-    const { name, email, role, avatar, graduationYear , course , currentPosition , company , location , phone } = req.body;
+    const { name, email, role,  graduationYear , course ,  phone } = req.body;
 
    try {
      const user = await User.findByIdAndUpdate(_id,{
@@ -329,13 +329,10 @@ const editUserDetails = asyncHandler(async (req, res) => {
              name,
              email,
              role,
-             avatar,
              graduationYear,
              course,
-             currentPosition,
-             company,
-             location,
              phone
+      
          }
      } ,{ new: true });
 
