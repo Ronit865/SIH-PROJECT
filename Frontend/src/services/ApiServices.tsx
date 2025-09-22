@@ -76,6 +76,8 @@ export const userService = {
   }
 };
 
+
+
 // Events Services
 export const eventService = {
   getEvents: async (): Promise<ApiResponse> => {
@@ -115,6 +117,10 @@ export const adminService = {
     const response = await api.post('/admin/addcsv', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
+    return response.data;
+  },
+  getAllUsers: async (): Promise<ApiResponse> => {
+    const response = await api.get('/admin/user');
     return response.data;
   },
   
@@ -169,4 +175,5 @@ export const handleApiSuccess = (response: ApiResponse) => {
     message: response.message,
     statusCode: response.statusCode
   };
+
 };
