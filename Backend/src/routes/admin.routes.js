@@ -1,7 +1,7 @@
 import express from 'express';
 import { upload } from '../middlewares/multer.middleware.js';
 import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
-import { getCurrentUser } from '../controllers/user.controller.js';
+import { getAllUser } from '../controllers/user.controller.js';
 
 import { addStudentCsv, changeAdminPassword, editUserDetails,  updateAdminAvatar,  } from '../controllers/admin.controller.js';
 
@@ -15,7 +15,7 @@ router.route("/addcsv").post(verifyAdminJWT, upload.single("csv"), addStudentCsv
 
 router.route("/editdetails/:_id").patch(verifyAdminJWT, editUserDetails)
 
-router.route("/user").get(verifyAdminJWT, getCurrentUser)
+router.route("/user").get(verifyAdminJWT, getAllUser)
 
 router.route("/change-password").post(verifyAdminJWT, changeAdminPassword)
 

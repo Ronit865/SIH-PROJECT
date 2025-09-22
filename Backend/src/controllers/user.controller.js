@@ -256,6 +256,13 @@ const changeUserPassword = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Password Changed Successfully"))
 })
 
+const getAllUser = asyncHandler(async (req,res)=>{
+    const users = await User.find().select('-password -refreshToken');
+    return res
+        .status(200)
+        .json(new ApiResponse(200, users, "All Users Fetched Successfully"))
+})
+
 const getCurrentUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);
     return res
@@ -334,5 +341,6 @@ export {
     getCurrentUser,
     updateUserDetails,
     updateUserAvatar,
+    getAllUser,
 };
 
