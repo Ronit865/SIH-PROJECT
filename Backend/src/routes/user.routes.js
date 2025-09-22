@@ -1,5 +1,5 @@
 import express from 'express';
-import { changeUserPassword, forgotPassword, getCurrentUser,  refreshAccessToken, resetPassword, updateUserAvatar,  updateUserDetails, verifyOTP } from '../controllers/user.controller.js';
+import { changeUserPassword,  getCurrentUser,  refreshAccessToken,  updateUserAvatar,  updateUserDetails} from '../controllers/user.controller.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import User from '../models/user.model.js';
@@ -13,12 +13,6 @@ const router = express.Router();
 router.route("/refresh-token").post(refreshAccessToken)
 
 router.route("/change-password").post(verifyJWT, changeUserPassword)
-
-router.route("/forgot-password").post(forgotPassword)
-
-router.route("/verify-otp").post(verifyOTP);
-
-router.route("/reset-password").post(resetPassword);
 
 router.route("/user").get(verifyJWT, getCurrentUser)
 

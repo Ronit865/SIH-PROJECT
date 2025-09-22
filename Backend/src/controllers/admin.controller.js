@@ -132,106 +132,106 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 })
 
-const forgotPassword = asyncHandler(async (req, res) => {
+// const forgotPassword = asyncHandler(async (req, res) => {
 
-    const { email } = req.body;
+//     const { email } = req.body;
 
-    if (!email) {
-        throw new ApiError(400, "Email is required");
-    }
+//     if (!email) {
+//         throw new ApiError(400, "Email is required");
+//     }
 
-    const admin = await Admin.findOne({ email });
+//     const admin = await Admin.findOne({ email });
 
-    if (!admin) {
-        throw new ApiError(404, "Admin not found");
-    }
+//     if (!admin) {
+//         throw new ApiError(404, "Admin not found");
+//     }
 
-    // Generate OTP
-    try {
+//     // Generate OTP
+//     try {
 
-        const otp = otpGenerator.generate(6, {
-            upperCaseAlphabets: false,
-            specialChars: false,
-            lowerCaseAlphabets: false
-        });
+//         const otp = otpGenerator.generate(6, {
+//             upperCaseAlphabets: false,
+//             specialChars: false,
+//             lowerCaseAlphabets: false
+//         });
 
-        // Store OTP and expiry in user document
-        admin.resetPasswordOTP = otp;
-        admin.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
-        await admin.save({ validateBeforeSave: false });
+//         // Store OTP and expiry in user document
+//         admin.resetPasswordOTP = otp;
+//         admin.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+//         await admin.save({ validateBeforeSave: false });
 
-        // Send email with OTP
-        const emailResult = await sendOTPEmail(email, otp);
+//         // Send email with OTP
+//         const emailResult = await sendOTPEmail(email, otp);
 
-        if (!emailResult.success) {
-            throw new ApiError(500, 'Failed to send OTP email');
-        }
+//         if (!emailResult.success) {
+//             throw new ApiError(500, 'Failed to send OTP email');
+//         }
 
-    } catch (error) {
-        console.error('Error generating OTP:', error);
-        throw new ApiError(500, "Failed to generate OTP");
-    }
-    return res
-        .status(200)
-        .json(new ApiResponse(200, {}, "OTP sent to email successfully"))
-})
+//     } catch (error) {
+//         console.error('Error generating OTP:', error);
+//         throw new ApiError(500, "Failed to generate OTP");
+//     }
+//     return res
+//         .status(200)
+//         .json(new ApiResponse(200, {}, "OTP sent to email successfully"))
+// })
 
-const verifyOTP = asyncHandler(async (req, res) => {
-    const { email, otp } = req.body;
+// const verifyOTP = asyncHandler(async (req, res) => {
+//     const { email, otp } = req.body;
 
-    if (!email || !otp) {
-        throw new ApiError(400, "Email and OTP are required");
-    }
+//     if (!email || !otp) {
+//         throw new ApiError(400, "Email and OTP are required");
+//     }
 
-    const admin = await Admin.findOne({
-        email,
-        resetPasswordOTP: otp,
-        resetPasswordExpires: { $gt: Date.now() }
-    });
+//     const admin = await Admin.findOne({
+//         email,
+//         resetPasswordOTP: otp,
+//         resetPasswordExpires: { $gt: Date.now() }
+//     });
 
-    if (!admin) {
-        throw new ApiError(400, "Invalid or expired OTP");
-    }
+//     if (!admin) {
+//         throw new ApiError(400, "Invalid or expired OTP");
+//     }
 
-    // OTP is valid, redirect to reset password page
-    return res.status(200).json(new ApiResponse(200, {}, "OTP verified ✅"))
-});
+//     // OTP is valid, redirect to reset password page
+//     return res.status(200).json(new ApiResponse(200, {}, "OTP verified ✅"))
+// });
 
-const resetPassword = asyncHandler(async (req, res) => {
-    const { email, token, newPassword, confirmPassword } = req.body;
+// const resetPassword = asyncHandler(async (req, res) => {
+//     const { email, token, newPassword, confirmPassword } = req.body;
 
-    if (!email || !token || !newPassword || !confirmPassword) {
-        throw new ApiError(400, "All fields are required");
-    }
+//     if (!email || !token || !newPassword || !confirmPassword) {
+//         throw new ApiError(400, "All fields are required");
+//     }
 
-    if (newPassword !== confirmPassword) {
-        throw new ApiError(400, "Passwords do not match");
-    }
+//     if (newPassword !== confirmPassword) {
+//         throw new ApiError(400, "Passwords do not match");
+//     }
 
-    if (newPassword.length < 6) {
-        throw new ApiError(400, "Password must be at least 6 characters long");
-    }
+//     if (newPassword.length < 6) {
+//         throw new ApiError(400, "Password must be at least 6 characters long");
+//     }
 
-    const admin = await Admin.findOne({
-        email,
-        resetPasswordOTP: token,
-        resetPasswordExpires: { $gt: Date.now() }
-    });
+//     const admin = await Admin.findOne({
+//         email,
+//         resetPasswordOTP: token,
+//         resetPasswordExpires: { $gt: Date.now() }
+//     });
 
-    if (!admin) {
-        throw new ApiError(400, "Invalid or expired token");
-    }
+//     if (!admin) {
+//         throw new ApiError(400, "Invalid or expired token");
+//     }
 
-    // Reset password
-    admin.password = newPassword;
-    admin.resetPasswordOTP = undefined;
-    admin.resetPasswordExpires = undefined;
-    await admin.save({ validateBeforeSave: false });
+//     // Reset password
+//     admin.password = newPassword;
+//     admin.resetPasswordOTP = undefined;
+//     admin.resetPasswordExpires = undefined;
+//     await admin.save({ validateBeforeSave: false });
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, {}, "Password reset successfully"));
-});
+//     return res
+//         .status(200)
+//         .json(new ApiResponse(200, {}, "Password reset successfully"));
+// });
 
 const changeAdminPassword = asyncHandler(async (req, res) => {
 
@@ -351,9 +351,6 @@ const editUserDetails = asyncHandler(async (req, res) => {
 export {
    
     refreshAccessToken,
-    forgotPassword,
-    verifyOTP,
-    resetPassword,
     changeAdminPassword,
     updateAdminAvatar,
     addStudentCsv,
