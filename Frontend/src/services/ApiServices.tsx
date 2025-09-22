@@ -13,7 +13,8 @@ interface ApiError {
   message: string;
   errors: string[];
   success: false;
-}
+} 
+
 
 // Auth Services
 export const authService = {
