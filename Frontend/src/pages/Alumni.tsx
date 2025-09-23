@@ -242,14 +242,13 @@ export function Alumni() {
   });
 
   // Calculate stats from actual data
-  const totalAlumni = alumniData.length;
-  const verifiedAlumni = alumniData.filter(
-    (alumni) => alumni?.isVerified
+   const totalUsers = alumniData.length;
+  const alumniCount = alumniData.filter(
+    (user) => user?.role?.toLowerCase() === "alumni"
   ).length;
-  const pendingAlumni = alumniData.filter(
-    (alumni) => !alumni?.isVerified
+  const studentCount = alumniData.filter(
+    (user) => user?.role?.toLowerCase() === "student"
   ).length;
-  const activeAlumni = verifiedAlumni;
 
   // Handle edit user
   const handleEditUser = (user: User) => {
@@ -674,10 +673,10 @@ export function Alumni() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Total Alumni
+                  Alumni
                 </p>
                 <p className="text-2xl font-bold text-foreground">
-                  {totalAlumni.toLocaleString()}
+                  {alumniCount.toLocaleString()}
                 </p>
               </div>
               <UserCheck className="h-8 w-8 text-primary" />
@@ -690,10 +689,10 @@ export function Alumni() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Verified
+                  Student
                 </p>
                 <p className="text-2xl font-bold text-success">
-                  {verifiedAlumni.toLocaleString()}
+                  {studentCount.toLocaleString()}
                 </p>
               </div>
               <UserCheck className="h-8 w-8 text-success" />
@@ -706,17 +705,17 @@ export function Alumni() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Pending
+                  Total
                 </p>
                 <p className="text-2xl font-bold text-warning">
-                  {pendingAlumni.toLocaleString()}
+                  {totalUsers.toLocaleString()}
                 </p>
               </div>
               <UserX className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
-
+{/* 
         <Card className="bento-card gradient-subtle border-card-border/50">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -732,6 +731,7 @@ export function Alumni() {
             </div>
           </CardContent>
         </Card>
+          */}
       </div>
 
       {/* Alumni Table */}
@@ -742,7 +742,7 @@ export function Alumni() {
               <CardTitle>Alumni Directory</CardTitle>
               <CardDescription>
                 Manage and verify alumni profiles ({filteredAlumni.length} of{" "}
-                {totalAlumni} alumni)
+                {totalUsers} alumni)
               </CardDescription>
             </div>
             <div className="flex gap-2">

@@ -8,6 +8,10 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+node_modules/.cache
+.pnp
+.pnp.json
+
 dist
 dist-ssr
 *.local
@@ -22,3 +26,49 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Build outputs
+build/
+out/
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

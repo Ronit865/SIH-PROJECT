@@ -165,10 +165,10 @@ export function Communications() {
             Manage newsletters, announcements, and alumni communications.
           </p>
         </div>
-        <Button className="gradient-primary text-primary-foreground hover:shadow-purple">
+        {/* <Button className="gradient-primary text-primary-foreground hover:shadow-purple">
           <Plus className="h-4 w-4 mr-2" />
           Create Campaign
-        </Button>
+        </Button> */}
       </div>
 
       {/* Stats Cards */}
