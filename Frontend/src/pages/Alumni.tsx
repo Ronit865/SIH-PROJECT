@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/ApiServices";
 import {
   Card,
@@ -29,6 +29,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
   Search,
   Plus,
   MoreHorizontal,
@@ -39,6 +49,9 @@ import {
   Building,
   Calendar,
   Loader2,
+  Upload,
+  FileText,
+  X,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
@@ -60,6 +73,36 @@ interface User {
 export function Alumni() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  // CSV Upload Mutation
+  const uploadCSVMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('csv', file);
+      return await adminService.uploadCSV(formData);
+    },
+    onSuccess: (response) => {
+      toast({
+        title: "Success",
+        description: "Alumni data uploaded successfully",
+      });
+      setIsDialogOpen(false);
+      setSelectedFile(null);
+      queryClient.invalidateQueries({ queryKey: ["alumni"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload CSV file",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Fetch alumni data using React Query
   const {
@@ -71,7 +114,6 @@ export function Alumni() {
     queryKey: ["alumni"],
     queryFn: async () => {
       const response = await adminService.getAllUsers();
-      // console.log(response);
       return response;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -91,10 +133,6 @@ export function Alumni() {
   const alumniData: User[] = Array.isArray(alumniResponse) 
     ? alumniResponse 
     : [];
-
-  console.log("Alumni Response:", alumniResponse);
-  console.log("Alumni Data:", alumniData);
-  console.log("Alumni Data Length:", alumniData.length);
 
   const filteredAlumni = alumniData.filter((alumni) => {
     if (!alumni || typeof alumni !== "object") {
@@ -120,7 +158,7 @@ export function Alumni() {
   const pendingAlumni = alumniData.filter(
     (alumni) => !alumni?.isVerified
   ).length;
-  const activeAlumni = verifiedAlumni; // You can define your own logic for "active"
+  const activeAlumni = verifiedAlumni;
 
   const getStatusBadge = (isVerified: boolean) => {
     if (isVerified) {
@@ -136,6 +174,59 @@ export function Alumni() {
         </Badge>
       );
     }
+  };
+
+  // File upload handlers
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'text/csv') {
+      setSelectedFile(file);
+    } else {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a CSV file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type === 'text/csv') {
+        setSelectedFile(file);
+      } else {
+        toast({
+          title: "Invalid file type",
+          description: "Please select a CSV file",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleUpload = () => {
+    if (selectedFile) {
+      uploadCSVMutation.mutate(selectedFile);
+    }
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
   };
 
   if (isLoading) {
@@ -159,10 +250,123 @@ export function Alumni() {
             Manage alumni profiles, verify registrations, and track engagement.
           </p>
         </div>
-        <Button className="gradient-primary text-primary-foreground hover:shadow-purple">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Alumni
-        </Button>
+        
+        {/* Add Alumni Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gradient-primary text-primary-foreground hover:shadow-purple">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Alumni
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md bento-card gradient-surface border-card-border/50">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5 text-primary" />
+                Upload Alumni CSV
+              </DialogTitle>
+              <DialogDescription>
+                Upload a CSV file containing alumni data. The file should include columns for name, email, graduation year, course, and phone.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* File Upload Area */}
+              <div className="space-y-2">
+                <Label htmlFor="csv-file">CSV File</Label>
+                <div
+                  className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
+                    dragActive
+                      ? "border-primary bg-primary/5"
+                      : "border-card-border/50 hover:border-primary/50"
+                  }`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                >
+                  <input
+                    id="csv-file"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileSelect}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  
+                  {selectedFile ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-8 w-8 text-primary" />
+                        <div>
+                          <p className="font-medium text-foreground">{selectedFile.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {(selectedFile.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={removeFile}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-foreground font-medium mb-2">
+                        Drop your CSV file here, or click to browse
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Supports CSV files up to 10MB
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* CSV Format Info */}
+              <div className="bg-accent/20 border border-accent/30 rounded-lg p-4">
+                <h4 className="font-medium text-foreground mb-2">Expected CSV Format:</h4>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Your CSV file should include the following columns:
+                </p>
+                <code className="text-xs bg-background/50 p-2 rounded block">
+                  name, email, graduationYear, course, phone
+                </code>
+              </div>
+            </div>
+
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+                disabled={uploadCSVMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpload}
+                disabled={!selectedFile || uploadCSVMutation.isPending}
+                className="gradient-primary text-primary-foreground"
+              >
+                {uploadCSVMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload CSV
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats Cards */}
