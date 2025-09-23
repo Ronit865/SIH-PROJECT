@@ -10,13 +10,15 @@ const addEvent = asyncHandler(async (req, res) => {
     if (admin.role !== 'admin') {
         throw new ApiError(403, "Forbidden: Only admin can add events");
     }
-    const { title, description, date } = req.body;
+    const { title, description, date, location, time } = req.body;
 
     try {
         const event = await Event.create({
             title,
             description,
-            date
+            date,
+            location,
+            time
         });
         res.status(201).json(new ApiResponse(201, event, "Event created successfully"));
     } catch (error) {
