@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 
 const donationSchema = new mongoose.Schema({
-    title: {
+    name: {
         type: String,
         required: true,
     },
@@ -10,15 +10,19 @@ const donationSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    amount: {
+    goal: {
         type: Number,
         required: true,
     },
-    donor: {
+    raisedAmount: {
+        type: Number,
+        default: 0,
+    },
+    donors: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
-    }
+    }]
 }, { timestamps: true });
 
 const Donation = mongoose.model("Donation", donationSchema);
