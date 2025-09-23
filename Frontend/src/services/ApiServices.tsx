@@ -111,6 +111,10 @@ export const adminService = {
     return await api.patch(`/admin/editdetails/${userId}`, data);
   },
   
+  deleteUser: async (userId: string): Promise<ApiResponse> => {
+    return await api.delete(`/admin/deleteuser/${userId}`);
+  },
+  
   changeAdminPassword: async (data: {
     oldPassword: string;
     newPassword: string;

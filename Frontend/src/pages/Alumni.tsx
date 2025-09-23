@@ -37,6 +37,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import {
   Search,
@@ -52,6 +69,8 @@ import {
   Upload,
   FileText,
   X,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
@@ -70,12 +89,38 @@ interface User {
   updatedAt: string;
 }
 
+// Form data interface for editing
+interface EditFormData {
+  name: string;
+  email: string;
+  graduationYear: string;
+  course: string;
+  phone: string;
+  role: string;
+}
+
 export function Alumni() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  
+  // Edit dialog states
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editFormData, setEditFormData] = useState<EditFormData>({
+    name: "",
+    email: "",
+    graduationYear: "",
+    course: "",
+    phone: "",
+    role: "",
+  });
+  
+  // Delete dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -99,6 +144,52 @@ export function Alumni() {
       toast({
         title: "Error",
         description: error.message || "Failed to upload CSV file",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Edit User Mutation
+  const editUserMutation = useMutation({
+    mutationFn: async (data: { userId: string; formData: EditFormData }) => {
+      return await adminService.editUserDetails(data.userId, data.formData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "User details updated successfully",
+      });
+      setIsEditDialogOpen(false);
+      setEditingUser(null);
+      queryClient.invalidateQueries({ queryKey: ["alumni"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user details",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete User Mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await adminService.deleteUser(userId);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["alumni"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
         variant: "destructive",
       });
     },
@@ -159,6 +250,50 @@ export function Alumni() {
     (alumni) => !alumni?.isVerified
   ).length;
   const activeAlumni = verifiedAlumni;
+
+  // Handle edit user
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditFormData({
+      name: user.name || "",
+      email: user.email || "",
+      graduationYear: user.graduationYear || "",
+      course: user.course || "",
+      phone: user.phone || "",
+      role: user.role || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle form input changes
+  const handleEditFormChange = (field: keyof EditFormData, value: string) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle edit form submission
+  const handleEditSubmit = () => {
+    if (!editingUser) return;
+    
+    editUserMutation.mutate({
+      userId: editingUser._id,
+      formData: editFormData
+    });
+  };
+
+  // Handle delete user
+  const handleDeleteUser = (user: User) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = () => {
+    if (!userToDelete) return;
+    deleteUserMutation.mutate(userToDelete._id);
+  };
 
   const getStatusBadge = (isVerified: boolean) => {
     if (isVerified) {
@@ -386,6 +521,152 @@ export function Alumni() {
         </Dialog>
       </div>
 
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg bento-card gradient-surface border-card-border/50">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5 text-primary" />
+              Edit User Details
+            </DialogTitle>
+            <DialogDescription>
+              Update the user information below. All fields are required.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editFormData.name}
+                  onChange={(e) => handleEditFormChange('name', e.target.value)}
+                  placeholder="Enter full name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => handleEditFormChange('email', e.target.value)}
+                  placeholder="Enter email address"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-graduation">Graduation Year</Label>
+                <Input
+                  id="edit-graduation"
+                  value={editFormData.graduationYear}
+                  onChange={(e) => handleEditFormChange('graduationYear', e.target.value)}
+                  placeholder="e.g. 2023"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-course">Course</Label>
+                <Input
+                  id="edit-course"
+                  value={editFormData.course}
+                  onChange={(e) => handleEditFormChange('course', e.target.value)}
+                  placeholder="e.g. Computer Science"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  value={editFormData.phone}
+                  onChange={(e) => handleEditFormChange('phone', e.target.value)}
+                  placeholder="Enter phone number"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-role">Role</Label>
+                <Select 
+                  value={editFormData.role} 
+                  onValueChange={(value) => handleEditFormChange('role', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="alumni">Alumni</SelectItem>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="faculty">Faculty</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+              disabled={editUserMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditSubmit}
+              disabled={editUserMutation.isPending}
+              className="gradient-primary text-primary-foreground"
+            >
+              {editUserMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Update User
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user account for{" "}
+              <strong>{userToDelete?.name}</strong> and remove all their data from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete User"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-slide-up">
         <Card className="bento-card gradient-subtle border-card-border/50">
@@ -585,13 +866,16 @@ export function Alumni() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>
-                            <UserCheck className="h-4 w-4 mr-2" />
-                              Edit  
+                          <DropdownMenuItem onClick={() => handleEditUser(alumni)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive">
-                            <UserX className="h-4 w-4 mr-2" />
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => handleDeleteUser(alumni)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
                             Remove
                           </DropdownMenuItem>
                         </DropdownMenuContent>
