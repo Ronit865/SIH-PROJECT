@@ -34,7 +34,7 @@ interface CreateEventForm {
 }
 
 export function Events() {
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,19 +208,19 @@ export function Events() {
     const hasInactiveEvents = dayEvents.some(event => !event.isactive);
     
     return (
-      <div className="relative w-full h-full flex items-center justify-center">
-        <span className={`relative z-10 ${dayEvents.length > 0 ? 'font-semibold' : ''}`}>
+      <div className="relative w-full h-full flex items-center justify-center p-1">
+        <span className={`relative z-10 text-center ${dayEvents.length > 0 ? 'font-semibold' : ''}`}>
           {day.getDate()}
         </span>
         {dayEvents.length > 0 && (
           <>
             {/* Event indicator dot */}
-            <div className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full ${
+            <div className={`absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full ${
               hasActiveEvents ? 'bg-primary' : 'bg-muted-foreground'
             }`} />
             {/* Multiple events indicator */}
             {dayEvents.length > 1 && (
-              <div className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 translate-x-1 w-1 h-1 rounded-full ${
+              <div className={`absolute bottom-0.5 left-1/2 transform -translate-x-1/2 translate-x-2 w-1 h-1 rounded-full ${
                 hasActiveEvents ? 'bg-primary' : 'bg-muted-foreground'
               }`} />
             )}
@@ -491,7 +491,29 @@ export function Events() {
               mode="single"
               selected={date}
               onSelect={setDate}
-              className="rounded-md border-0"
+              className="rounded-md border-0 w-full"
+              classNames={{
+                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                month: "space-y-4",
+                caption: "flex justify-center pt-1 relative items-center",
+                caption_label: "text-sm font-medium",
+                nav: "space-x-1 flex items-center",
+                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                nav_button_previous: "absolute left-1",
+                nav_button_next: "absolute right-1",
+                table: "w-full border-collapse space-y-1",
+                head_row: "flex",
+                head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem] flex-1 text-center",
+                row: "flex w-full mt-2",
+                cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md flex-1",
+                day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground rounded-md mx-auto flex items-center justify-center",
+                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_today: "bg-accent text-accent-foreground",
+                day_outside: "text-muted-foreground opacity-50",
+                day_disabled: "text-muted-foreground opacity-50",
+                day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                day_hidden: "invisible",
+              }}
               components={{
                 DayContent: ({ date: dayDate }) => dayContentRenderer(dayDate)
               }}
