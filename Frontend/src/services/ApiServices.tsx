@@ -139,6 +139,32 @@ export const adminService = {
   }
 };
 
+// Donation Services
+export const donationService = {
+  getCampaigns: async (): Promise<ApiResponse> => {
+    return await api.get('/donations/getDonations');
+  },
+  
+  createCampaign: async (campaignData: {
+    name: string;        // Changed from 'title' to 'name'
+    description: string;
+    goal: number;        // Changed from 'amount' to 'goal'
+  }): Promise<ApiResponse> => {
+    return await api.post('/donations/addDonation', campaignData);
+  },
+  
+  updateCampaign: async (id: string, campaignData: {
+    name: string;        // Changed from 'title' to 'name'
+    description: string;
+    goal: number;        // Changed from 'amount' to 'goal'
+  }): Promise<ApiResponse> => {
+    return await api.patch(`/donations/editDonation/${id}`, campaignData);
+  },
+  
+  deleteCampaign: async (id: string): Promise<ApiResponse> => {
+    return await api.delete(`/donations/deleteDonation/${id}`);
+  }
+};
 
 // Error handler utility
 export const handleApiError = (error: ApiError) => {
