@@ -2,10 +2,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { DollarSign, TrendingUp, Users, Target, Plus, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import { donationService } from "@/services/ApiServices";
+import { toast } from "sonner";
 
 // Keep the static data for stats and recent donations (you can replace these later)
 const donationStats = [
@@ -114,10 +119,24 @@ interface Campaign {
 	createdAt?: string;
 }
 
+// Campaign form interface
+interface CampaignForm {
+	name: string;
+	description: string;
+	goal: number;
+}
+
 export function Donations() {
 	const [campaigns, setCampaigns] = useState<Campaign[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [formData, setFormData] = useState<CampaignForm>({
+		name: "",
+		description: "",
+		goal: 0,
+	});
 
 	// Fetch campaigns from database
 	useEffect(() => {
@@ -140,6 +159,61 @@ export function Donations() {
 
 		fetchCampaigns();
 	}, []);
+
+	// Handle form input changes
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+		const { name, value } = e.target;
+		setFormData(prev => ({
+			...prev,
+			[name]: name === 'goal' ? parseFloat(value) || 0 : value
+		}));
+	};
+
+	// Handle form submission
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		
+		// Validation
+		if (!formData.name.trim()) {
+			toast.error("Campaign name is required");
+			return;
+		}
+		
+		if (!formData.description.trim()) {
+			toast.error("Campaign description is required");
+			return;
+		}
+		
+		if (formData.goal <= 0) {
+			toast.error("Goal amount must be greater than 0");
+			return;
+		}
+
+		try {
+			setIsSubmitting(true);
+			const response = await donationService.createCampaign(formData);
+			
+			if (response.success) {
+				toast.success("Campaign created successfully!");
+				setCampaigns(prev => [...prev, response.data]);
+				setIsDialogOpen(false);
+				setFormData({ name: "", description: "", goal: 0 });
+			} else {
+				toast.error(response.message || "Failed to create campaign");
+			}
+		} catch (err: any) {
+			toast.error(err.message || "An error occurred while creating campaign");
+			console.error("Error creating campaign:", err);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	// Reset form when dialog closes
+	const handleDialogClose = () => {
+		setIsDialogOpen(false);
+		setFormData({ name: "", description: "", goal: 0 });
+	};
 
 	const formatCurrency = (amount: number) => {
 		return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
@@ -182,10 +256,86 @@ export function Donations() {
 						Track fundraising campaigns, donations, and donor engagement.
 					</p>
 				</div>
-				<Button className="gradient-primary text-primary-foreground hover:shadow-purple">
-					<Plus className="h-4 w-4 mr-2" />
-					New Campaign
-				</Button>
+				
+				{/* New Campaign Dialog */}
+				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+					<DialogTrigger asChild>
+						<Button className="gradient-primary text-primary-foreground hover:shadow-purple">
+							<Plus className="h-4 w-4 mr-2" />
+							New Campaign
+						</Button>
+					</DialogTrigger>
+					<DialogContent className="sm:max-w-[425px]">
+						<DialogHeader>
+							<DialogTitle>Create New Campaign</DialogTitle>
+							<DialogDescription>
+								Create a new fundraising campaign. Fill in the details below.
+							</DialogDescription>
+						</DialogHeader>
+						<form onSubmit={handleSubmit} className="space-y-4">
+							<div className="space-y-2">
+								<Label htmlFor="name">Campaign Name</Label>
+								<Input
+									id="name"
+									name="name"
+									placeholder="e.g., Scholarship Fund 2024"
+									value={formData.name}
+									onChange={handleInputChange}
+									disabled={isSubmitting}
+									required
+								/>
+							</div>
+							
+							<div className="space-y-2">
+								<Label htmlFor="description">Description</Label>
+								<Textarea
+									id="description"
+									name="description"
+									placeholder="Describe the purpose and goals of this campaign..."
+									value={formData.description}
+									onChange={handleInputChange}
+									disabled={isSubmitting}
+									required
+									rows={3}
+								/>
+							</div>
+							
+							<div className="space-y-2">
+								<Label htmlFor="goal">Goal Amount ($)</Label>
+								<Input
+									id="goal"
+									name="goal"
+									type="number"
+									placeholder="50000"
+									min="1"
+									step="1"
+									value={formData.goal || ""}
+									onChange={handleInputChange}
+									disabled={isSubmitting}
+									required
+								/>
+							</div>
+							
+							<div className="flex justify-end space-x-2 pt-4">
+								<Button
+									type="button"
+									variant="outline"
+									onClick={handleDialogClose}
+									disabled={isSubmitting}
+								>
+									Cancel
+								</Button>
+								<Button
+									type="submit"
+									disabled={isSubmitting}
+									className="gradient-primary text-primary-foreground"
+								>
+									{isSubmitting ? "Creating..." : "Create Campaign"}
+								</Button>
+							</div>
+						</form>
+					</DialogContent>
+				</Dialog>
 			</div>
 
 			{/* Stats Grid */}
