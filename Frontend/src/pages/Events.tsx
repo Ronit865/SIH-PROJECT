@@ -182,6 +182,70 @@ export function Events() {
   const totalParticipants = events.reduce((total, event) => total + event.participants.length, 0);
   const averageParticipants = totalEvents > 0 ? Math.round(totalParticipants / totalEvents) : 0;
 
+  // Function to get events for a specific date
+  const getEventsForDate = (checkDate: Date) => {
+    const dateString = checkDate.toISOString().split('T')[0];
+    return events.filter(event => {
+      const eventDate = new Date(event.date).toISOString().split('T')[0];
+      return eventDate === dateString;
+    });
+  };
+
+  // Function to check if a date has events
+  const hasEvents = (checkDate: Date) => {
+    return getEventsForDate(checkDate).length > 0;
+  };
+
+  // Function to get event dates for calendar highlighting
+  const getEventDates = () => {
+    return events.map(event => new Date(event.date));
+  };
+
+  // Custom day content renderer for calendar
+  const dayContentRenderer = (day: Date) => {
+    const dayEvents = getEventsForDate(day);
+    const hasActiveEvents = dayEvents.some(event => event.isactive);
+    const hasInactiveEvents = dayEvents.some(event => !event.isactive);
+    
+    return (
+      <div className="relative w-full h-full flex items-center justify-center">
+        <span className={`relative z-10 ${dayEvents.length > 0 ? 'font-semibold' : ''}`}>
+          {day.getDate()}
+        </span>
+        {dayEvents.length > 0 && (
+          <>
+            {/* Event indicator dot */}
+            <div className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full ${
+              hasActiveEvents ? 'bg-primary' : 'bg-muted-foreground'
+            }`} />
+            {/* Multiple events indicator */}
+            {dayEvents.length > 1 && (
+              <div className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 translate-x-1 w-1 h-1 rounded-full ${
+                hasActiveEvents ? 'bg-primary' : 'bg-muted-foreground'
+              }`} />
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  // Filter events based on selected date
+  const getFilteredEventsForSelectedDate = () => {
+    if (!date) return filteredEvents;
+    
+    const selectedDateEvents = getEventsForDate(date);
+    return selectedDateEvents.filter(event => {
+      if (selectedFilter === "all") return true;
+      if (selectedFilter === "active") return event.isactive;
+      if (selectedFilter === "inactive") return !event.isactive;
+      return true;
+    });
+  };
+
+  // Get events to display (either for selected date or all filtered events)
+  const eventsToDisplay = date ? getFilteredEventsForSelectedDate() : filteredEvents;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -413,7 +477,14 @@ export function Events() {
         <Card className="lg:col-span-1 bento-card gradient-surface border-card-border/50 h-fit">
           <CardHeader>
             <CardTitle className="text-lg">Event Calendar</CardTitle>
-            <CardDescription>Select a date to view events</CardDescription>
+            <CardDescription>
+              Select a date to view events
+              {date && getEventsForDate(date).length > 0 && (
+                <span className="block text-sm text-primary mt-1">
+                  {getEventsForDate(date).length} event(s) on selected date
+                </span>
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Calendar
@@ -421,7 +492,32 @@ export function Events() {
               selected={date}
               onSelect={setDate}
               className="rounded-md border-0"
+              components={{
+                DayContent: ({ date: dayDate }) => dayContentRenderer(dayDate)
+              }}
+              modifiers={{
+                hasEvents: (day) => hasEvents(day),
+                hasActiveEvents: (day) => getEventsForDate(day).some(event => event.isactive),
+                hasInactiveEvents: (day) => getEventsForDate(day).some(event => !event.isactive)
+              }}
+              modifiersClassNames={{
+                hasEvents: "bg-primary/10 hover:bg-primary/20",
+                hasActiveEvents: "text-primary",
+                hasInactiveEvents: "text-muted-foreground"
+              }}
             />
+            
+            {/* Calendar Legend */}
+            <div className="mt-4 space-y-2 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-primary"></div>
+                <span>Active Events</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-muted-foreground"></div>
+                <span>Inactive Events</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -430,10 +526,27 @@ export function Events() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle>Upcoming Events</CardTitle>
-                <CardDescription>Manage your event calendar</CardDescription>
+                <CardTitle>
+                  {date ? `Events for ${date.toLocaleDateString()}` : 'All Events'}
+                </CardTitle>
+                <CardDescription>
+                  {date ? 
+                    `Showing events for selected date` : 
+                    'Manage your event calendar'
+                  }
+                </CardDescription>
               </div>
               <div className="flex gap-2">
+                {date && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setDate(undefined)}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Date
+                  </Button>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline">
@@ -460,13 +573,15 @@ export function Events() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {filteredEvents.length === 0 ? (
+              {eventsToDisplay.length === 0 ? (
                 <div className="text-center py-8">
                   <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No events found</p>
+                  <p className="text-muted-foreground">
+                    {date ? 'No events found for selected date' : 'No events found'}
+                  </p>
                 </div>
               ) : (
-                filteredEvents.map((event, index) => (
+                eventsToDisplay.map((event, index) => (
                   <Card 
                     key={event._id} 
                     className="bento-card hover:shadow-md border-card-border/50 animate-fade-in"
