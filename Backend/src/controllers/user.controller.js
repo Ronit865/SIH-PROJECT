@@ -93,34 +93,34 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Unauthorized request");
     }
 
-    
-        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
 
-        const user = await User.findById(decodedToken?._id)
+    const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
 
-        if (!user) {
-            throw new ApiError(401, "Invalid refresh token");
-        }
+    const user = await User.findById(decodedToken?._id)
 
-        if (incomingRefreshToken !== user?.refreshToken) {
-            throw new ApiError(401, "Refresh token is expired");
-        }
+    if (!user) {
+        throw new ApiError(401, "Invalid refresh token");
+    }
 
-        const options = {
-            httpOnly: true,
-            secure: true,
-        }
+    if (incomingRefreshToken !== user?.refreshToken) {
+        throw new ApiError(401, "Refresh token is expired");
+    }
 
-        const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user._id)
+    const options = {
+        httpOnly: true,
+        secure: true,
+    }
 
-        return res
-            .status(200)
-            .cookie('accessToken', accessToken, options)
-            .cookie('refreshToken', newRefreshToken, options)
-            .json(new ApiResponse(
-                200, { accessToken, newRefreshToken }
-            ))
-    
+    const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user._id)
+
+    return res
+        .status(200)
+        .cookie('accessToken', accessToken, options)
+        .cookie('refreshToken', newRefreshToken, options)
+        .json(new ApiResponse(
+            200, { accessToken, newRefreshToken }
+        ))
+
 })
 
 // const forgotPassword = asyncHandler(async (req, res) => {
@@ -254,7 +254,7 @@ const changeUserPassword = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Password Changed Successfully"))
 })
 
-const getAllUser = asyncHandler(async (req,res)=>{
+const getAllUser = asyncHandler(async (req, res) => {
     const users = await User.find().select('-password -refreshToken');
     return res
         .status(200)
@@ -334,9 +334,29 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 })
 
 const deleteUser = asyncHandler(async (req, res) => {
-    await User.findByIdAndDelete(req.user._id);
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    if (user.avatar) {
+        const avatarPublicId = extractPublicId(user.avatar);
+        if (avatarPublicId) {
+            await deleteFromCloudinary(avatarPublicId);
+        }
+    }
+
+    await User.findByIdAndDelete(user._id);
+
+    // Clear cookies
+    const options = {
+        httpOnly: true,
+        secure: false,
+    };
+
     return res
         .status(200)
+        .clearCookie('accessToken', options)
+        .clearCookie('refreshToken', options)
         .json(new ApiResponse(200, {}, "User Deleted Successfully"));
 });
 
