@@ -195,6 +195,47 @@ const generateAccessAndRefreshToken = async (adminId) => {
 //         .json(new ApiResponse(200, {}, "Password reset successfully"));
 // });
 
+
+const updateAdminProfile = asyncHandler(async (req, res) => {
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+        throw new ApiError(400, "Name and Email are required");
+    }
+
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (email) updateFields.email = email;
+
+    // Check if email already exists (if email is being updated)
+    if (email) {
+        const existingAdmin = await Admin.findOne({
+            email,
+            _id: { $ne: req.admin._id }
+        });
+
+        if (existingAdmin) {
+            throw new ApiError(400, "Email already exists");
+        }
+    }
+
+    const admin = await Admin.findByIdAndUpdate(
+        req.admin._id,
+        { $set: updateFields },
+        { new: true }
+    ).select('-password -refreshToken');
+
+    if (!admin) {
+        throw new ApiError(404, "Admin not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, admin, "Profile updated successfully"));
+});
+
+
+
 const changeAdminPassword = asyncHandler(async (req, res) => {
 
     const { oldPassword, newPassword } = req.body;
@@ -290,31 +331,31 @@ const editUserDetails = asyncHandler(async (req, res) => {
         throw new ApiError(400, "User ID is required");
     }
 
-    const { name, email, role,  graduationYear , course ,  phone } = req.body;
+    const { name, email, role, graduationYear, course, phone } = req.body;
 
-   try {
-     const user = await User.findByIdAndUpdate(_id,{
-         $set: {
-             name,
-             email,
-             role,
-             graduationYear,
-             course,
-             phone
-      
-         }
-     } ,{ new: true });
+    try {
+        const user = await User.findByIdAndUpdate(_id, {
+            $set: {
+                name,
+                email,
+                role,
+                graduationYear,
+                course,
+                phone
+
+            }
+        }, { new: true });
 
         if (!user) {
-           throw new ApiError(404, "User not found");
-       }
+            throw new ApiError(404, "User not found");
+        }
 
-         return res
-                .status(200)
-                .json(new ApiResponse(200, user, "User details updated successfully"));
-   } catch (error) {
-     throw new ApiError(500, "Internal Server Error");
-   }
+        return res
+            .status(200)
+            .json(new ApiResponse(200, user, "User details updated successfully"));
+    } catch (error) {
+        throw new ApiError(500, "Internal Server Error");
+    }
 })
 
 export {
@@ -322,5 +363,6 @@ export {
     updateAdminAvatar,
     addStudentCsv,
     editUserDetails,
-    getCurrentAdmin
+    getCurrentAdmin,
+    updateAdminProfile,
 }

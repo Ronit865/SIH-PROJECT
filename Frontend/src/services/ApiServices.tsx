@@ -117,7 +117,16 @@ export const adminService = {
     return response.data;
   },
   
+  updateAdminProfile: async (data: { name: string; email: string }): Promise<ApiResponse> => {
+    return await api.patch('/admin/update-profile', data);
+  },
 
+  updateAdminAvatar: async (formData: FormData): Promise<ApiResponse> => {
+    return await api.patch('/admin/update-avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  
 // getAllUsers: async (): Promise<ApiResponse> => {
 //     // Remove .data from here - it should return the full response
 //     return await api.get('/admin/user');
@@ -139,7 +148,7 @@ export const adminService = {
   },
   
   forgotPassword: async (email: string): Promise<ApiResponse> => {
-    return await api.post('/admin/forgot-password', { email });
+    return await api.post('/admin/change-password', { email });
   },
   
   verifyOTP: async (email: string, otp: string): Promise<ApiResponse> => {

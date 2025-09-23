@@ -6,6 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/context/AuthContext";
+import { adminService, handleApiError, handleApiSuccess } from "@/services/ApiServices";
+import { useState, useRef } from "react";
+import { toast } from "sonner";
 import { 
   Settings as SettingsIcon, 
   User, 
@@ -20,6 +24,111 @@ import {
 } from "lucide-react";
 
 export function Settings() {
+  const { admin, fetchCurrentUser } = useAuth();
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Form state for admin profile
+  const [profileData, setProfileData] = useState({
+    name: admin?.name || "",
+    email: admin?.email || "",
+  });
+
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+
+  // Handle profile update
+  const handleProfileUpdate = async () => {
+    try {
+      setIsUpdating(true);
+      const response = await adminService.updateAdminProfile(profileData);
+      
+      if (response.success) {
+        const successData = handleApiSuccess(response);
+        toast.success("Profile updated successfully");
+        await fetchCurrentUser(); // Refresh admin data
+      }
+    } catch (error: any) {
+      const apiError = handleApiError(error);
+      toast.error(apiError.message || "Failed to update profile");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File size must be less than 2MB");
+      return;
+    }
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+      toast.error("Please upload a JPG, PNG, or GIF file");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await adminService.updateAdminAvatar(formData);
+      
+      if (response.success) {
+        toast.success("Avatar updated successfully");
+        await fetchCurrentUser(); // Refresh admin data
+      }
+    } catch (error: any) {
+      const apiError = handleApiError(error);
+      toast.error(apiError.message || "Failed to update avatar");
+    }
+  };
+
+  // Handle password change
+  const handlePasswordChange = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords don't match");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      const response = await adminService.changeAdminPassword({
+        oldPassword: passwordData.oldPassword,
+        newPassword: passwordData.newPassword
+      });
+
+      if (response.success) {
+        toast.success("Password changed successfully");
+        setPasswordData({
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: ""
+        });
+      }
+    } catch (error: any) {
+      const apiError = handleApiError(error);
+      toast.error(apiError.message || "Failed to change password");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -45,50 +154,62 @@ export function Settings() {
           <CardContent className="space-y-6">
             <div className="flex items-center gap-6">
               <Avatar className="h-20 w-20">
-                <AvatarImage src="/placeholder.svg" alt="Admin" />
-                <AvatarFallback className="bg-primary/10 text-primary text-lg">AD</AvatarFallback>
+                <AvatarImage src={admin?.avatar} alt={admin?.name || "Admin"} />
+                <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                  {admin?.name?.charAt(0).toUpperCase() || "A"}
+                </AvatarFallback>
               </Avatar>
               <div className="space-y-2">
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   Change Photo
                 </Button>
                 <p className="text-sm text-muted-foreground">
                   JPG, PNG or GIF. Max size 2MB.
                 </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
               </div>
             </div>
 
             <Separator />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" defaultValue="Admin" />
+                <Label htmlFor="name">Full Name</Label>
+                <Input 
+                  id="name" 
+                  value={profileData.name}
+                  onChange={(e) => setProfileData(prev => ({...prev, name: e.target.value}))}
+                />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" defaultValue="User" />
+                <Label htmlFor="email">Email Address</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={profileData.email}
+                  onChange={(e) => setProfileData(prev => ({...prev, email: e.target.value}))}
+                />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input id="email" type="email" defaultValue="admin@university.edu" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="title">Job Title</Label>
-              <Input id="title" defaultValue="Alumni Relations Manager" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Input id="department" defaultValue="Alumni Affairs" />
-            </div>
-
-            <Button className="bg-primary hover:bg-primary/90">
-              Save Changes
+            <Button 
+              className="bg-primary hover:bg-primary/90"
+              onClick={handleProfileUpdate}
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Saving..." : "Save Changes"}
             </Button>
           </CardContent>
         </Card>
@@ -125,80 +246,6 @@ export function Settings() {
         </Card>
       </div>
 
-      {/* Notification Settings */}
-      <Card className="bento-card gradient-surface border-card-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-primary" />
-            Notification Preferences
-          </CardTitle>
-          <CardDescription>
-            Configure how you want to receive notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Email Notifications</Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive email updates about system activities
-                </p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">New Alumni Registrations</Label>
-                <p className="text-sm text-muted-foreground">
-                  Get notified when new alumni join the network
-                </p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Event RSVPs</Label>
-                <p className="text-sm text-muted-foreground">
-                  Notifications for event registrations and cancellations
-                </p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Donation Alerts</Label>
-                <p className="text-sm text-muted-foreground">
-                  Get notified about new donations and campaign updates
-                </p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Weekly Reports</Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive weekly summary reports via email
-                </p>
-              </div>
-              <Switch />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Security Settings */}
       <Card className="bento-card gradient-surface border-card-border/50">
         <CardHeader>
@@ -214,19 +261,38 @@ export function Settings() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="currentPassword">Current Password</Label>
-              <Input id="currentPassword" type="password" />
+              <Input 
+                id="currentPassword" 
+                type="password" 
+                value={passwordData.oldPassword}
+                onChange={(e) => setPasswordData(prev => ({...prev, oldPassword: e.target.value}))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
-              <Input id="newPassword" type="password" />
+              <Input 
+                id="newPassword" 
+                type="password" 
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData(prev => ({...prev, newPassword: e.target.value}))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input id="confirmPassword" type="password" />
+              <Input 
+                id="confirmPassword" 
+                type="password" 
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData(prev => ({...prev, confirmPassword: e.target.value}))}
+              />
             </div>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={handlePasswordChange}
+              disabled={isChangingPassword || !passwordData.oldPassword || !passwordData.newPassword}
+            >
               <Key className="h-4 w-4 mr-2" />
-              Update Password
+              {isChangingPassword ? "Updating..." : "Update Password"}
             </Button>
           </div>
 
@@ -253,7 +319,7 @@ export function Settings() {
                 <div>
                   <p className="text-sm font-medium">Current Session</p>
                   <p className="text-xs text-muted-foreground">
-                    Chrome on MacOS • San Francisco, CA
+                    Chrome on Windows • Your Location
                   </p>
                 </div>
                 <Badge className="bg-success/10 text-success border-success/20">Active</Badge>

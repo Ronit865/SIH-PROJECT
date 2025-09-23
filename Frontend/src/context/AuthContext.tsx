@@ -10,6 +10,7 @@ interface User {
 }
 
 interface Admin {
+  name: string;
   _id: string;
   email: string;
   avatar?: string;
