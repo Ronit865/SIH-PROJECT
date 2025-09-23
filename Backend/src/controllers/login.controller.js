@@ -199,12 +199,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Failed to generate OTP");
     }
 
-
-
-    if (!admin || !user) {
-        throw new ApiError(400, "user not found")
-    }
-
     // Generate OTP
     return res
         .status(200)

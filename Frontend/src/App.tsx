@@ -27,29 +27,32 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Authentication Routes */}
-          <Route path="/auth/login" element={<Login />} />
-          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-          <Route path="/auth/otp-verification" element={<OTPVerification />} />
-          <Route path="/auth/reset-password" element={<ResetPassword />} />
-          
-          {/* Protected Routes */}
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="alumni" element={<Alumni />} />
-            <Route path="events" element={<Events />} />
-            <Route path="jobs" element={<Jobs />} />
-            <Route path="donations" element={<Donations />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="communications" element={<Communications />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            {/* Authentication Routes */}
+            <Route path="/auth/login" element={<Login />} />
+            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+            <Route path="/auth/otp-verification" element={<OTPVerification />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
+            
+            {/* Protected Routes */}
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="alumni" element={<Alumni />} />
+              <Route path="events" element={<Events />} />
+              <Route path="jobs" element={<Jobs />} />
+              <Route path="donations" element={<Donations />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="communications" element={<Communications />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
+
 
 export default App;

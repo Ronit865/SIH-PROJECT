@@ -1,4 +1,5 @@
 import axios from "axios";
+import { promise } from "zod";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
@@ -30,7 +31,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     
     // Handle ApiError format from your backend
-    if (error.response?.data) {
+    if (error.response) {
       const apiError = error.response.data;
       
       // Check if it's a 401 unauthorized error and attempt token refresh
@@ -51,6 +52,7 @@ api.interceptors.response.use(
           window.location.href = '/auth/login';
           return Promise.reject(refreshError);
         }
+        return Promise.reject(apiError)
       }
       
       // Create a structured error object matching your ApiError format

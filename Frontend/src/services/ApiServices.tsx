@@ -15,141 +15,120 @@ interface ApiError {
   success: false;
 } 
 
-
 // Auth Services
 export const authService = {
   login: async (credentials: { email: string; password: string }): Promise<ApiResponse> => {
-    const response = await api.post('/login', credentials);
-    return response.data;
+    return await api.post('/login', credentials);
   },
   
   logout: async (): Promise<ApiResponse> => {
-    const response = await api.post('/logout');
-    return response.data;
+    return await api.post('/logout');
   },
   
   forgotPassword: async (email: string): Promise<ApiResponse> => {
-    const response = await api.post('/users/forgot-password', { email });
-    return response.data;
+    return await api.post('/forgot-password', { email });
   },
   
   verifyOTP: async (email: string, otp: string): Promise<ApiResponse> => {
-    const response = await api.post('/users/verify-otp', { email, otp });
-    return response.data;
+    return await api.post('/verify-otp', { email, otp });
   },
   
   resetPassword: async (email: string, newPassword: string, otp: string): Promise<ApiResponse> => {
-    const response = await api.post('/users/reset-password', { 
+    return await api.post('/reset-password', { 
       email, 
       newPassword, 
       otp 
     });
-    return response.data;
   }
 };
 
 // User Services
 export const userService = {
   getCurrentUser: async (): Promise<ApiResponse> => {
-    const response = await api.get('/users/user');
-    return response.data;
+    return await api.get('/users/user');
   },
   
   updateProfile: async (data: any): Promise<ApiResponse> => {
-    const response = await api.patch('/users/update-user', data);
-    return response.data;
+    return await api.patch('/users/update-user', data);
   },
   
   updateAvatar: async (formData: FormData): Promise<ApiResponse> => {
-    const response = await api.post('/users/update-avatar', formData, {
+    return await api.post('/users/update-avatar', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
-    return response.data;
   },
   
   changePassword: async (data: { 
     oldPassword: string; 
     newPassword: string; 
   }): Promise<ApiResponse> => {
-    const response = await api.post('/users/change-password', data);
-    return response.data;
+    return await api.post('/users/change-password', data);
   }
 };
 
 // Events Services
 export const eventService = {
   getEvents: async (): Promise<ApiResponse> => {
-    const response = await api.get('/events/getEvents');
-    return response.data;
+    return await api.get('/events/getEvents');
   },
   
   createEvent: async (eventData: any): Promise<ApiResponse> => {
-    const response = await api.post('/events/addEvent', eventData);
-    return response.data;
+    return await api.post('/events/addEvent', eventData);
   },
   
   updateEvent: async (id: string, eventData: any): Promise<ApiResponse> => {
-    const response = await api.patch(`/events/editEvent/${id}`, eventData);
-    return response.data;
+    return await api.patch(`/events/editEvent/${id}`, eventData);
   },
   
   deleteEvent: async (id: string): Promise<ApiResponse> => {
-    const response = await api.delete(`/events/deleteEvent/${id}`);
-    return response.data;
+    return await api.delete(`/events/deleteEvent/${id}`);
   },
   
   joinEvent: async (eventId: string): Promise<ApiResponse> => {
-    const response = await api.post(`/events/addUserToEvent/${eventId}`);
-    return response.data;
+    return await api.post(`/events/addUserToEvent/${eventId}`);
   },
   
   leaveEvent: async (eventId: string): Promise<ApiResponse> => {
-    const response = await api.post(`/events/removeUserFromEvent/${eventId}`);
-    return response.data;
+    return await api.post(`/events/removeUserFromEvent/${eventId}`);
   }
 };
 
 // Admin Services
 export const adminService = {
   uploadCSV: async (formData: FormData): Promise<ApiResponse> => {
-    const response = await api.post('/admin/addcsv', formData, {
+    return await api.post('/admin/addcsv', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
-    return response.data;
   },
   
   editUserDetails: async (userId: string, data: any): Promise<ApiResponse> => {
-    const response = await api.patch(`/admin/editdetails/${userId}`, data);
-    return response.data;
+    return await api.patch(`/admin/editdetails/${userId}`, data);
   },
   
   changeAdminPassword: async (data: {
     oldPassword: string;
     newPassword: string;
   }): Promise<ApiResponse> => {
-    const response = await api.post('/admin/change-password', data);
-    return response.data;
+    return await api.post('/admin/change-password', data);
   },
   
   forgotPassword: async (email: string): Promise<ApiResponse> => {
-    const response = await api.post('/admin/forgot-password', { email });
-    return response.data;
+    return await api.post('/admin/forgot-password', { email });
   },
   
   verifyOTP: async (email: string, otp: string): Promise<ApiResponse> => {
-    const response = await api.post('/admin/verify-otp', { email, otp });
-    return response.data;
+    return await api.post('/admin/verify-otp', { email, otp });
   },
   
   resetPassword: async (email: string, newPassword: string, otp: string): Promise<ApiResponse> => {
-    const response = await api.post('/admin/reset-password', { 
+    return await api.post('/admin/reset-password', { 
       email, 
       newPassword, 
       otp 
     });
-    return response.data;
   }
 };
+
 
 // Error handler utility
 export const handleApiError = (error: ApiError) => {

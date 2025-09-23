@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/services/ApiServices";
+import { handleApiError , handleApiSuccess } from "@/services/ApiServices";
 
 const resetPasswordSchema = z.object({
   newPassword: z
@@ -28,7 +30,21 @@ export const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  const email = location.state?.email;
+  const otp = location.state?.otp;
+
+   useEffect(() => {
+    // Redirect to forgot password if no email or OTP
+    if (!email || !otp) {
+      navigate("/auth/forgot-password");
+      return;
+    }
+  }, [email, otp, navigate]);
+
+
 
   const form = useForm<ResetPasswordForm>({
     resolver: zodResolver(resetPasswordSchema),
@@ -64,26 +80,26 @@ export const ResetPassword = () => {
     return "Strong";
   };
 
+  
   const onSubmit = async (data: ResetPasswordForm) => {
     setIsLoading(true);
     try {
-      // Replace with your custom backend API call
-      console.log("Reset password data:", data);
+      const response = await authService.resetPassword(email, data.newPassword, otp);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Password reset successful",
-        description: "Your password has been updated. You can now sign in.",
-      });
-      
-      // Navigate to login page
-      navigate("/auth/login");
-    } catch (error) {
+      if (response.success) {
+        toast({
+          title: "Password reset successful",
+          description: "Your password has been updated. You can now sign in.",
+        });
+        
+        // Navigate to login page
+        navigate("/auth/login");
+      }
+    } catch (error: any) {
+      const apiError = handleApiError(error);
       toast({
         title: "Error",
-        description: "Failed to reset password. Please try again.",
+        description: apiError.message || "Failed to reset password. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/services/ApiServices";
+import { handleApiError } from "@/services/ApiServices";
+
 
 export const OTPVerification = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -14,9 +17,16 @@ export const OTPVerification = () => {
   const [canResend, setCanResend] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
+  const email = location.state?.email;
   useEffect(() => {
+    if (!email) {
+      navigate("/auth/forgot-password");
+      return;
+    }
+
     const interval = setInterval(() => {
       setTimer((prev) => {
         if (prev <= 1) {
@@ -28,9 +38,14 @@ export const OTPVerification = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [email, navigate]);
+
+  if (!email) {
+    return null;
+  }
 
   const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
     if (value.length > 1) return;
 
     const newOtp = [...otp];
@@ -53,7 +68,7 @@ export const OTPVerification = () => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").slice(0, 6);
     const newOtp = [...otp];
-    
+
     for (let i = 0; i < pastedData.length; i++) {
       if (i < 6 && /^\d$/.test(pastedData[i])) {
         newOtp[i] = pastedData[i];
@@ -63,7 +78,9 @@ export const OTPVerification = () => {
   };
 
   const handleSubmit = async () => {
+
     const otpString = otp.join("");
+
     if (otpString.length !== 6) {
       toast({
         title: "Invalid OTP",
@@ -75,23 +92,27 @@ export const OTPVerification = () => {
 
     setIsLoading(true);
     try {
-      // Replace with your custom backend API call
-      console.log("OTP verification:", otpString);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "OTP verified",
-        description: "Redirecting to reset password...",
-      });
-      
-      // Navigate to reset password page
-      navigate("/auth/reset-password");
-    } catch (error) {
+
+      const response = await authService.verifyOTP(email, otpString);
+
+   
+
+      if (response && (response.success === true || response.statusCode === 200)) {
+        toast({
+          title: "OTP verified",
+          description: "Redirecting to reset password...",
+        });
+
+        // Navigate to reset password with email and OTP
+        navigate("/auth/reset-password", {
+          state: { email, otp: otpString }
+        });
+      }
+    } catch (error: any) {
+      const apiError = handleApiError(error);
       toast({
         title: "Invalid OTP",
-        description: "Please check your code and try again.",
+        description: apiError.message || "Please check your code and try again.",
         variant: "destructive",
       });
     } finally {
@@ -104,22 +125,21 @@ export const OTPVerification = () => {
 
     setIsResending(true);
     try {
-      // Replace with your custom backend API call
-      console.log("Resending OTP");
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTimer(60);
-      setCanResend(false);
-      toast({
-        title: "OTP resent",
-        description: "A new verification code has been sent to your email.",
-      });
-    } catch (error) {
+      const response = await authService.forgotPassword(email);
+
+      if (response.success) {
+        setTimer(60);
+        setCanResend(false);
+        toast({
+          title: "OTP resent",
+          description: "A new verification code has been sent to your email.",
+        });
+      }
+    } catch (error: any) {
+      const apiError = handleApiError(error);
       toast({
         title: "Error",
-        description: "Failed to resend OTP. Please try again.",
+        description: apiError.message || "Failed to resend OTP. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -157,7 +177,7 @@ export const OTPVerification = () => {
                   />
                 ))}
               </div>
-              
+
               <div className="text-center">
                 {canResend ? (
                   <Button
