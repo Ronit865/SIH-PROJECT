@@ -4,12 +4,12 @@ import ApiResponse from "../utils/ApiResponse.js";
 import Donation from "../models/donation.model.js";
 
 const addCampaign = asyncHandler(async (req, res) => {
-    const { title, description, amount  } = req.body;
+    const { name, description, goal } = req.body;
 
     const newCampaign = new Donation({
-        title,
+        name,
         description,
-        amount,
+        goal,
     });
 
     await newCampaign.save();
@@ -18,12 +18,12 @@ const addCampaign = asyncHandler(async (req, res) => {
 
 const editCampaign = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { title, description, amount } = req.body;
+    const { name, description, goal } = req.body;
 
     const updatedCampaign = await Donation.findByIdAndUpdate(id, {
-        title,
+        name,
         description,
-        amount,
+        goal,
     }, { new: true });
 
     if (!updatedCampaign) {
