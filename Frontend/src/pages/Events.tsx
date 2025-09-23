@@ -3,10 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarDays, Clock, MapPin, Users, Plus, Eye, Edit, Trash2, Loader2 } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Users, Plus, Eye, Edit, Trash2, Loader2, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { eventService, handleApiError } from "@/services/ApiServices";
-import { toast } from "sonner"; // Assuming you're using sonner for notifications
+import { toast } from "sonner";
 
 interface Event {
   _id: string;
@@ -21,12 +25,30 @@ interface Event {
   updatedAt: string;
 }
 
+interface CreateEventForm {
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+}
+
 export function Events() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [formData, setFormData] = useState<CreateEventForm>({
+    title: "",
+    description: "",
+    date: "",
+    time: "",
+    location: ""
+  });
+  const [formErrors, setFormErrors] = useState<Partial<CreateEventForm>>({});
 
   // Fetch events from backend
   useEffect(() => {
@@ -57,6 +79,86 @@ export function Events() {
       const errorInfo = handleApiError(err);
       toast.error(`Failed to delete event: ${errorInfo.message}`);
     }
+  };
+
+  const handleInputChange = (field: keyof CreateEventForm, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Partial<CreateEventForm> = {};
+    
+    if (!formData.title.trim()) {
+      errors.title = "Title is required";
+    }
+    
+    if (!formData.description.trim()) {
+      errors.description = "Description is required";
+    }
+    
+    if (!formData.date) {
+      errors.date = "Date is required";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      
+      const eventData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        date: formData.date,
+        time: formData.time || undefined,
+        location: formData.location.trim() || undefined
+      };
+
+      await eventService.createEvent(eventData);
+      toast.success("Event created successfully");
+      
+      // Reset form and close dialog
+      setFormData({
+        title: "",
+        description: "",
+        date: "",
+        time: "",
+        location: ""
+      });
+      setFormErrors({});
+      setIsCreateDialogOpen(false);
+      
+      // Refresh events list
+      fetchEvents();
+    } catch (err: any) {
+      const errorInfo = handleApiError(err);
+      toast.error(`Failed to create event: ${errorInfo.message}`);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      description: "",
+      date: "",
+      time: "",
+      location: ""
+    });
+    setFormErrors({});
   };
 
   const filteredEvents = events.filter(event => {
@@ -99,10 +201,148 @@ export function Events() {
             Create, manage, and track alumni events and gatherings.
           </p>
         </div>
-        <Button className="gradient-primary text-primary-foreground hover:shadow-purple">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Event
-        </Button>
+        
+        {/* Create Event Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button 
+              className="gradient-primary text-primary-foreground hover:shadow-purple"
+              onClick={() => setIsCreateDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Event
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px] bento-card gradient-surface border-card-border/50">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-foreground">Create New Event</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Fill in the details below to create a new event for the alumni community.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleCreateEvent} className="space-y-6 mt-4">
+              {/* Event Title */}
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-medium text-foreground">
+                  Event Title *
+                </Label>
+                <Input
+                  id="title"
+                  placeholder="Enter event title"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange("title", e.target.value)}
+                  className={`border-card-border/50 focus:border-primary ${
+                    formErrors.title ? "border-destructive" : ""
+                  }`}
+                />
+                {formErrors.title && (
+                  <p className="text-sm text-destructive">{formErrors.title}</p>
+                )}
+              </div>
+
+              {/* Event Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-medium text-foreground">
+                  Description *
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe your event"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  className={`min-h-[100px] border-card-border/50 focus:border-primary resize-none ${
+                    formErrors.description ? "border-destructive" : ""
+                  }`}
+                />
+                {formErrors.description && (
+                  <p className="text-sm text-destructive">{formErrors.description}</p>
+                )}
+              </div>
+
+              {/* Date and Time Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date" className="text-sm font-medium text-foreground">
+                    Date *
+                  </Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => handleInputChange("date", e.target.value)}
+                    className={`border-card-border/50 focus:border-primary ${
+                      formErrors.date ? "border-destructive" : ""
+                    }`}
+                  />
+                  {formErrors.date && (
+                    <p className="text-sm text-destructive">{formErrors.date}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="time" className="text-sm font-medium text-foreground">
+                    Time
+                  </Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={formData.time}
+                    onChange={(e) => handleInputChange("time", e.target.value)}
+                    className="border-card-border/50 focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Location */}
+              <div className="space-y-2">
+                <Label htmlFor="location" className="text-sm font-medium text-foreground">
+                  Location
+                </Label>
+                <Input
+                  id="location"
+                  placeholder="Enter event location"
+                  value={formData.location}
+                  onChange={(e) => handleInputChange("location", e.target.value)}
+                  className="border-card-border/50 focus:border-primary"
+                />
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-card-border/20">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    resetForm();
+                    setIsCreateDialogOpen(false);
+                  }}
+                  disabled={isCreating}
+                  className="border-card-border/50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isCreating}
+                  className="gradient-primary text-primary-foreground hover:shadow-purple"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Event
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Error Message */}
