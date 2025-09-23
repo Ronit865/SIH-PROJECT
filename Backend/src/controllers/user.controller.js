@@ -333,6 +333,13 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 })
 
+const deleteUser = asyncHandler(async (req, res) => {
+    await User.findByIdAndDelete(req.user._id);
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "User Deleted Successfully"));
+});
+
 export {
     refreshAccessToken,
     changeUserPassword,
@@ -340,5 +347,6 @@ export {
     updateUserDetails,
     updateUserAvatar,
     getAllUser,
+    deleteUser
 };
 
