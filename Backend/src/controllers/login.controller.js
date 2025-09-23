@@ -5,6 +5,7 @@ import User from "../models/user.model.js";
 import Admin from "../models/admin.model.js";
 import otpGenerator from 'otp-generator';
 import { sendOTPEmail } from '../services/OTPGenerate.js';
+import jwt from "jsonwebtoken";
 
 const generateUserAccessAndRefreshToken = async (userId) => {
     try {
@@ -31,6 +32,75 @@ const generateAdminAccessAndRefreshToken = async (adminId) => {
         throw new ApiError(500, "Error generating Admin Token")
     }
 };
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken || req.body.token; // Add req.body.token
+
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request");
+    }
+
+    try {
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+        const admin = await Admin.findById(decodedToken?._id)
+        const user = await User.findById(decodedToken?._id)
+
+        if (!user && !admin) {
+            throw new ApiError(401, "Invalid refresh token");
+        }
+
+        if (user) {
+            if (incomingRefreshToken !== user?.refreshToken) {
+                throw new ApiError(401, "Refresh token is expired");
+            }
+
+            const options = {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+            }
+
+            const { accessToken, refreshToken: newRefreshToken } = await generateUserAccessAndRefreshToken(user._id)
+
+            return res
+                .status(200)
+                .cookie('accessToken', accessToken, options)
+                .cookie('refreshToken', newRefreshToken, options)
+                .json(new ApiResponse(
+                    200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    "Access token refreshed"
+                ))
+        }
+
+        if (admin) {
+            if (incomingRefreshToken !== admin?.refreshToken) {
+                throw new ApiError(401, "Refresh token is expired");
+            }
+
+            const options = {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+            }
+
+            const { accessToken, refreshToken: newRefreshToken } = await generateAdminAccessAndRefreshToken(admin._id)
+
+            return res
+                .status(200)
+                .cookie('accessToken', accessToken, options)
+                .cookie('refreshToken', newRefreshToken, options)
+                .json(new ApiResponse(
+                    200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    "Access token refreshed"
+                ))
+        }
+    } catch (error) {
+        console.error('Refresh token error:', error);
+        throw new ApiError(401, error?.message || "Invalid refresh token");
+    }
+})
+
 
 const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -64,6 +134,7 @@ const login = asyncHandler(async (req, res) => {
             .cookie('refreshToken', refreshToken, options)
             .json(new ApiResponse(200, {
                 user: loggedInUser,
+                admin: null,
                 accessToken,
                 refreshToken,
                 userType: 'user'
@@ -91,7 +162,8 @@ const login = asyncHandler(async (req, res) => {
             .cookie('accessToken', accessToken, options)
             .cookie('refreshToken', refreshToken, options)
             .json(new ApiResponse(200, {
-                user: loggedInAdmin,
+                admin: loggedInAdmin,
+                user: null,
                 accessToken,
                 refreshToken,
                 userType: 'admin'
@@ -289,4 +361,5 @@ export {
     forgotPassword,
     verifyOTP,
     resetPassword
+    , refreshAccessToken
 }

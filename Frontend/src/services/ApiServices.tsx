@@ -1,3 +1,4 @@
+import { ref } from 'process';
 import api from '../api';
 
 // Type definitions matching your backend response format
@@ -31,6 +32,10 @@ export const authService = {
   
   verifyOTP: async (email: string, otp: string): Promise<ApiResponse> => {
     return await api.post('/verify-otp', { email, otp });
+  },
+
+  refreshAccessToken: async (refreshToken: string): Promise<ApiResponse> => {
+    return await api.post('/refresh-token', { token: refreshToken });
   },
   
   resetPassword: async (email: string, newPassword: string, otp: string): Promise<ApiResponse> => {
@@ -97,6 +102,11 @@ export const eventService = {
 
 // Admin Services
 export const adminService = {
+
+   getCurrentAdmin: async (): Promise<ApiResponse> => {
+    return await api.get('/admin/current-admin');
+  },
+  
   uploadCSV: async (formData: FormData): Promise<ApiResponse> => {
     return await api.post('/admin/addcsv', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -107,6 +117,12 @@ export const adminService = {
     return response.data;
   },
   
+
+// getAllUsers: async (): Promise<ApiResponse> => {
+//     // Remove .data from here - it should return the full response
+//     return await api.get('/admin/user');
+//   },
+
   editUserDetails: async (userId: string, data: any): Promise<ApiResponse> => {
     return await api.patch(`/admin/editdetails/${userId}`, data);
   },

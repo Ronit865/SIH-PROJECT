@@ -24,7 +24,15 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         req.user = user;
         next()
     } catch (err) {
-        throw new ApiError(401, "AuthMiddleware error", err);
+        if (err.name === 'JsonWebTokenError') {
+            throw new ApiError(401, "Invalid token");
+        } else if (err.name === 'TokenExpiredError') {
+            throw new ApiError(401, "Token expired");
+        } else if (err instanceof ApiError) {
+            throw err;
+        } else {
+            throw new ApiError(401, "Authentication failed");
+        }
         // return res.redirect('/login?error=Authentication%20required');
     }
 
@@ -46,23 +54,59 @@ export const verifyAdminJWT = asyncHandler(async (req, res, next) => {
         req.admin = admin;
         next()
     } catch (err) {
-        throw new ApiError(401, "AuthMiddleware error", err);
+        if (err.name === 'JsonWebTokenError') {
+            throw new ApiError(401, "Invalid token");
+        } else if (err.name === 'TokenExpiredError') {
+            throw new ApiError(401, "Token expired");
+        } else if (err instanceof ApiError) {
+            throw err;
+        } else {
+            throw new ApiError(401, "Authentication failed");
+        }
     }
 })
-export const verifyUserOrAdmin = (req, res, next) => {
-    verifyJWT(req, res, (err) => {
-        if (!err) {
+
+
+
+export const verifyUserOrAdmin = asyncHandler(async (req, res, next) => {
+    try {
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+        
+        if (!token) {
+            throw new ApiError(401, "Unauthorized Request")
+        }
+        
+        const decodeToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        
+        // Try to find user first
+        const user = await User.findById(decodeToken?._id).select("-password -refreshToken")
+        
+        if (user) {
+            req.user = user;
             return next();
         }
-
-        verifyAdminJWT(req, res, (adminErr) => {
-            if (!adminErr) {
-                return next();
-            }
-            return res.status(401).json({
-                success: false,
-                message: "Authentication required"
-            });
-        });
-    });
-};
+        
+        // If no user found, try admin
+        const admin = await Admin.findById(decodeToken?._id).select("-password -refreshToken")
+        
+        if (admin) {
+            req.admin = admin;
+            return next();
+        }
+        
+        // If neither user nor admin found
+        throw new ApiError(404, "Invalid Access Token");
+        
+    } catch (err) {
+        console.error('Auth error:', err);
+        if (err.name === 'JsonWebTokenError') {
+            throw new ApiError(401, "Invalid token");
+        } else if (err.name === 'TokenExpiredError') {
+            throw new ApiError(401, "Token expired");
+        } else if (err instanceof ApiError) {
+            throw err;
+        } else {
+            throw new ApiError(401, "Authentication failed");
+        }
+    }
+});
