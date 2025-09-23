@@ -410,7 +410,7 @@ export function Events() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar */}
-        <Card className="lg:col-span-1 bento-card gradient-surface border-card-border/50">
+        <Card className="lg:col-span-1 bento-card gradient-surface border-card-border/50 h-fit">
           <CardHeader>
             <CardTitle className="text-lg">Event Calendar</CardTitle>
             <CardDescription>Select a date to view events</CardDescription>
