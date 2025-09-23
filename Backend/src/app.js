@@ -23,7 +23,9 @@ import userRouter from './routes/user.routes.js';
 import adminRouter from './routes/admin.routes.js';
 import eventRouter from './routes/events.routes.js';
 import loginRouter from './routes/login.routes.js';
+import donationRouter from './routes/donation.routes.js';
 
+app.use('/api/donations',donationRouter)
 app.use('/api/admin',adminRouter)
 app.use('/api/events',eventRouter)
 app.use('/api/users',userRouter)
