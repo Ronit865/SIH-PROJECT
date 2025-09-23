@@ -41,12 +41,14 @@ const updateEvent = asyncHandler(async (req, res) => {
     }
 
     const { _id } = req.params;
-    const { title, description, date, isactive } = req.body;
+    const { title, description, date, isactive , location, time } = req.body;
     try {
         const event = await Event.findByIdAndUpdate(_id, {
             title,
             description,
             date,
+            location,
+            time,
             isactive
         }, { new: true });
         res.status(200).json(new ApiResponse(200, event, "Event updated successfully"));
