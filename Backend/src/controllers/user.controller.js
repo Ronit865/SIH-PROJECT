@@ -93,7 +93,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Unauthorized request");
     }
 
-    try {
+    
         const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
 
         const user = await User.findById(decodedToken?._id)
@@ -120,9 +120,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             .json(new ApiResponse(
                 200, { accessToken, newRefreshToken }
             ))
-    } catch (error) {
-        throw new ApiError(500, "Internal Server Error");
-    }
+    
 })
 
 // const forgotPassword = asyncHandler(async (req, res) => {
