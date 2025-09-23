@@ -176,6 +176,23 @@ export function Alumni() {
     }
   };
 
+  const getRoleBadge = (role: string) => {
+    const roleColors = {
+      admin: "bg-destructive/10 text-destructive border-destructive/20",
+      alumni: "bg-primary/10 text-primary border-primary/20",
+      student: "bg-success/10 text-success border-success/20",
+      faculty: "bg-warning/10 text-warning border-warning/20",
+    };
+
+    const colorClass = roleColors[role?.toLowerCase() as keyof typeof roleColors] || "bg-muted/10 text-muted-foreground border-muted/20";
+
+    return (
+      <Badge className={colorClass}>
+        {role || "User"}
+      </Badge>
+    );
+  };
+
   // File upload handlers
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -493,8 +510,7 @@ export function Alumni() {
                 <TableHead>Graduation</TableHead>
                 <TableHead>Course</TableHead>
                 <TableHead>Phone</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Joined</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -502,7 +518,7 @@ export function Alumni() {
               {filteredAlumni.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={6}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No alumni found
@@ -558,10 +574,7 @@ export function Alumni() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(alumni.isVerified || false)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(alumni.createdAt).toLocaleDateString()}
+                      {getRoleBadge(alumni.role || "")}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
