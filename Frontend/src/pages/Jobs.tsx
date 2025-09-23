@@ -3,80 +3,80 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Briefcase, MapPin, Clock, DollarSign, Search, Plus, CheckCircle, XCircle, Eye } from "lucide-react";
+import { Briefcase, MapPin, Clock, IndianRupee, Search, Plus, CheckCircle, XCircle, Eye } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const jobsData = [
-  {
-    id: 1,
-    title: "Senior Software Engineer",
-    company: "Tech Innovations Inc.",
-    location: "San Francisco, CA",
-    type: "Full-time",
-    salary: "$120,000 - $160,000",
-    postedBy: "Sarah Johnson (Class of 2019)",
-    postedDate: "2024-01-15",
-    status: "pending",
-    applications: 23,
-    description: "Join our team to build the next generation of AI-powered applications.",
-    category: "job",
+ {
+    "id": 1,
+    "title": "Senior Software Engineer",
+    "company": "Infosys Technologies",
+    "location": "Bengaluru, Karnataka",
+    "type": "Full-time",
+    "salary": "₹12,00,000 - ₹18,00,000 per annum",
+    "postedBy": "Rohit Sharma (Class of 2019)",
+    "postedDate": "2024-01-15",
+    "status": "pending",
+    "applications": 23,
+    "description": "Join our team to develop enterprise-scale AI-powered solutions.",
+    "category": "job"
   },
   {
-    id: 2,
-    title: "Marketing Manager",
-    company: "Global Brands Corp",
-    location: "New York, NY",
-    type: "Full-time",
-    salary: "$80,000 - $100,000",
-    postedBy: "Michael Chen (Class of 2018)",
-    postedDate: "2024-01-12",
-    status: "approved",
-    applications: 15,
-    description: "Lead marketing initiatives for our flagship products.",
-    category: "job",
+    "id": 2,
+    "title": "Marketing Manager",
+    "company": "Hindustan Unilever Ltd.",
+    "location": "Mumbai, Maharashtra",
+    "type": "Full-time",
+    "salary": "₹8,00,000 - ₹12,00,000 per annum",
+    "postedBy": "Ananya Mehta (Class of 2018)",
+    "postedDate": "2024-01-12",
+    "status": "approved",
+    "applications": 15,
+    "description": "Lead marketing initiatives for FMCG products across India.",
+    "category": "job"
   },
   {
-    id: 3,
-    title: "Mentorship: Product Management",
-    company: "Various Tech Companies",
-    location: "Remote",
-    type: "Mentorship",
-    salary: "Pro Bono",
-    postedBy: "Emily Rodriguez (Class of 2020)",
-    postedDate: "2024-01-10",
-    status: "approved",
-    applications: 8,
-    description: "1-on-1 mentorship for alumni transitioning into product management roles.",
-    category: "mentorship",
+    "id": 3,
+    "title": "Mentorship: Product Management",
+    "company": "Various Indian Startups",
+    "location": "Remote",
+    "type": "Mentorship",
+    "salary": "Pro Bono",
+    "postedBy": "Arjun Verma (Class of 2020)",
+    "postedDate": "2024-01-10",
+    "status": "approved",
+    "applications": 8,
+    "description": "1-on-1 mentorship for alumni transitioning into product management roles in Indian startups.",
+    "category": "mentorship"
   },
   {
-    id: 4,
-    title: "Data Scientist",
-    company: "Analytics Pro",
-    location: "Austin, TX",
-    type: "Contract",
-    salary: "$90 - $120/hour",
-    postedBy: "David Thompson (Class of 2017)",
-    postedDate: "2024-01-08",
-    status: "pending",
-    applications: 31,
-    description: "6-month contract to build predictive models for e-commerce platform.",
-    category: "job",
+    "id": 4,
+    "title": "Data Scientist",
+    "company": "TCS Analytics",
+    "location": "Hyderabad, Telangana",
+    "type": "Contract",
+    "salary": "₹3,000 - ₹5,000 per day",
+    "postedBy": "Neha Gupta (Class of 2017)",
+    "postedDate": "2024-01-08",
+    "status": "pending",
+    "applications": 31,
+    "description": "6-month contract to build predictive models for retail and e-commerce clients.",
+    "category": "job"
   },
   {
-    id: 5,
-    title: "Career Coaching Sessions",
-    company: "Alumni Network",
-    location: "Virtual",
-    type: "Mentorship",
-    salary: "Free",
-    postedBy: "Lisa Wang (Class of 2021)",
-    postedDate: "2024-01-05",
-    status: "approved",
-    applications: 12,
-    description: "Weekly career coaching sessions for recent graduates.",
-    category: "mentorship",
-  },
+    "id": 5,
+    "title": "Career Coaching Sessions",
+    "company": "Alumni Connect India",
+    "location": "Virtual",
+    "type": "Mentorship",
+    "salary": "Free",
+    "postedBy": "Karan Patel (Class of 2021)",
+    "postedDate": "2024-01-05",
+    "status": "approved",
+    "applications": 12,
+    "description": "Weekly online career coaching sessions for fresh graduates in India.",
+    "category": "mentorship"
+  }
 ];
 
 export function Jobs() {
@@ -263,7 +263,7 @@ export function Jobs() {
                           {job.type}
                         </div>
                         <div className="flex items-center gap-1">
-                          <DollarSign className="h-4 w-4" />
+                          <IndianRupee className="h-4 w-4" />
                           {job.salary}
                         </div>
                       </div>
