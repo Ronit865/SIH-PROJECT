@@ -236,7 +236,7 @@ export function Donations() {
 							Current fundraising initiatives from database
 						</CardDescription>
 					</CardHeader>
-					<CardContent>
+					<CardContent className="h-[600px] overflow-hidden">
 						{loading ? (
 							<div className="text-center py-8 text-muted-foreground">
 								Loading campaigns...
@@ -250,7 +250,7 @@ export function Donations() {
 								No campaigns found. Create your first campaign!
 							</div>
 						) : (
-							<div className="space-y-6">
+							<div className="h-full overflow-y-auto pr-2 space-y-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
 								{campaigns.map((campaign, index) => (
 									<div
 										key={campaign._id}
