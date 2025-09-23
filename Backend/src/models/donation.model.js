@@ -6,10 +6,6 @@ const donationSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    description: {
-        type: String,
-        required: true,
-    },
     goal: {
         type: Number,
         required: true,

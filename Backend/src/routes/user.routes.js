@@ -1,5 +1,5 @@
 import express from 'express';
-import { changeUserPassword,  getCurrentUser,  refreshAccessToken,  updateUserAvatar,  updateUserDetails} from '../controllers/user.controller.js';
+import { changeUserPassword,  getCurrentUser,  updateUserAvatar,  updateUserDetails} from '../controllers/user.controller.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import User from '../models/user.model.js';
@@ -10,7 +10,7 @@ const router = express.Router();
 
 // router.route("/logout").post(verifyJWT, logoutUser)
 
-router.route("/refresh-token").post(refreshAccessToken)
+
 
 router.route("/change-password").post(verifyJWT, changeUserPassword)
 

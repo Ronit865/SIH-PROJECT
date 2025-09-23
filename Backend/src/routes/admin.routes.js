@@ -3,7 +3,7 @@ import { upload } from '../middlewares/multer.middleware.js';
 import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
 import { deleteUser, getAllUser } from '../controllers/user.controller.js';
 
-import { addStudentCsv, changeAdminPassword, editUserDetails,  updateAdminAvatar,  } from '../controllers/admin.controller.js';
+import { addStudentCsv, changeAdminPassword, editUserDetails,  getCurrentAdmin,  updateAdminAvatar,  } from '../controllers/admin.controller.js';
 
 const router = express.Router();
 
@@ -22,5 +22,7 @@ router.route("/deleteuser").delete(verifyAdminJWT, deleteUser)
 router.route("/change-password").post(verifyAdminJWT, changeAdminPassword)
 
 router.route("/update-avatar").patch(verifyAdminJWT, upload.single("avatar"), updateAdminAvatar)
+
+router.route("/current-admin").get(verifyAdminJWT, getCurrentAdmin);
 
 export default router;
