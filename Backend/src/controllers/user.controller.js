@@ -8,84 +8,18 @@ import otpGenerator from 'otp-generator';
 import { sendOTPEmail } from '../services/OTPGenerate.js';
 
 
-const generateAccessAndRefreshToken = async (userId) => {
-    try {
-        const user = await User.findById(userId);
-        const accessToken = await user.generateAccessToken();
-        const refreshToken = await user.generateRefreshToken();
-        user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });
-        return { accessToken, refreshToken };
-    } catch (err) {
-        throw new ApiError(500, "Error generating Token")
-    }
-};
-
-// const loginUser = asyncHandler(async (req, res) => {
-//     const { email, password } = req.body;
-
-//     if (!email) {
-//         throw new ApiError(400, "Email is required")
+// const generateAccessAndRefreshToken = async (userId) => {
+//     try {
+//         const user = await User.findById(userId);
+//         const accessToken = await user.generateAccessToken();
+//         const refreshToken = await user.generateRefreshToken();
+//         user.refreshToken = refreshToken;
+//         await user.save({ validateBeforeSave: false });
+//         return { accessToken, refreshToken };
+//     } catch (err) {
+//         throw new ApiError(500, "Error generating Token")
 //     }
-
-//     const user = await User.findOne({
-//         $or: [{ email }]
-//     })
-
-//     if (!user) {
-//         throw new ApiError(404, "User not found")
-//     }
-
-//     const isPasswordValid = await user.isPasswordCorrect(password)
-
-//     if (!isPasswordValid) {
-//         throw new ApiError(401, "Invalid Crendentials")
-//     }
-
-//     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id)
-
-//     const loggedInUser = await User.findById(user._id).select('-password -refreshToken');
-
-//     const options = {
-//         httpOnly: true,
-//         secure: false,
-//     }
-
-//     return res
-//         .status(200)
-//         .cookie('accessToken', accessToken, options)
-//         .cookie('refreshToken', refreshToken, options)
-//         .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }));
-
-// });
-
-// const logoutUser = asyncHandler(async (req, res) => {
-
-//     await User.findByIdAndUpdate(
-
-//         req.user._id,
-//         {
-//             $unset: {
-//                 refreshToken: 1
-//             },
-//         },
-//         {
-//             new: true
-//         }
-//     )
-
-//     const options = {
-//         httpOnly: true,
-//         secure: false,
-//     }
-
-//     return res
-//         .status(200)
-//         .clearCookie('accessToken', options)
-//         .clearCookie('refreshToken', options)
-//         .json(new ApiResponse(200, {}, "Logged out successfully"))
-// });
-
+// };
 
 
 const changeUserPassword = asyncHandler(async (req, res) => {
