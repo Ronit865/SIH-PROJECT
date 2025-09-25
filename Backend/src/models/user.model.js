@@ -84,11 +84,29 @@ const userSchema = new mongoose.Schema({
   }
 }, { timestamps: true })
 
+// Add pre('save') middleware for individual document saves
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   // Hash the password before saving it to the database
   this.password = await bcrypt.hash(this.password, 10);
   next();
+});
+
+// Correct pre('insertMany') middleware
+userSchema.pre('insertMany', async function (next, docs) {
+  try {
+    if (docs && docs.length) {
+      for (let doc of docs) {
+        if (doc.password) {
+          // Hash each document's password
+          doc.password = await bcrypt.hash(doc.password, 10);
+        }
+      }
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {

@@ -18,7 +18,7 @@ const forgotPasswordSchema = z.object({
 
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
-export const ForgotPassword = () => {
+export  const ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
