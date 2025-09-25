@@ -1,4 +1,5 @@
 import multer from "multer";
+import fs from "fs";
 
 const uploadDir = './public/temp';
 if (!fs.existsSync(uploadDir)) {
