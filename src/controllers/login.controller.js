@@ -242,23 +242,36 @@ const forgotPassword = asyncHandler(async (req, res) => {
             lowerCaseAlphabets: false
         });
 
+        console.log('Generated OTP:', otp);
+
         if (user) {
             user.resetPasswordOTP = otp;
             user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
             await user.save({ validateBeforeSave: false });
+            console.log('Saved OTP to user database');
         }
         if (admin) {
             admin.resetPasswordOTP = otp;
             admin.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
             await admin.save({ validateBeforeSave: false });
+            console.log('Saved OTP to admin database');
         }
 
-        // Send email with OTP with better error handling
+        // Add timeout wrapper for email sending
         console.log('Attempting to send OTP email to:', email);
-        const emailResult = await sendOTPEmail(email, otp);
-        console.log('Email result:', emailResult);
+        
+        const emailPromise = sendOTPEmail(email, otp);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Email sending timeout after 30 seconds')), 30000)
+        );
 
-        if (!emailResult || !emailResult.success) {
+        let emailResult;
+        try {
+            emailResult = await Promise.race([emailPromise, timeoutPromise]);
+            console.log('Email result received:', emailResult);
+        } catch (emailError) {
+            console.error('Email sending failed:', emailError);
+            
             // Clean up the OTP from database if email fails
             if (user) {
                 user.resetPasswordOTP = undefined;
@@ -271,11 +284,35 @@ const forgotPassword = asyncHandler(async (req, res) => {
                 await admin.save({ validateBeforeSave: false });
             }
             
+            throw new ApiError(500, `Failed to send OTP email: ${emailError.message}`);
+        }
+
+        // Check if email was successful
+        if (!emailResult) {
+            console.log('Email result is null/undefined');
+            throw new ApiError(500, 'Email service returned no response');
+        }
+
+        if (!emailResult.success) {
             const errorMsg = emailResult?.message || 'Unknown email service error';
             console.error('Email service error:', errorMsg);
+            
+            // Clean up the OTP from database
+            if (user) {
+                user.resetPasswordOTP = undefined;
+                user.resetPasswordExpires = undefined;
+                await user.save({ validateBeforeSave: false });
+            }
+            if (admin) {
+                admin.resetPasswordOTP = undefined;
+                admin.resetPasswordExpires = undefined;
+                await admin.save({ validateBeforeSave: false });
+            }
+            
             throw new ApiError(500, `Failed to send OTP email: ${errorMsg}`);
         }
 
+        console.log('OTP email sent successfully');
         return res
             .status(200)
             .json(new ApiResponse(200, {}, "OTP sent to email successfully"))
