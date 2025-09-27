@@ -222,7 +222,6 @@ const logout = asyncHandler(async (req, res) => {
 });
 
 const forgotPassword = asyncHandler(async (req, res) => {
-
     const { email } = req.body;
 
     if (!email) {
@@ -236,10 +235,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found")
     }
 
-
-    // throw new ApiError(404, "User not found");
     try {
-
         const otp = otpGenerator.generate(6, {
             upperCaseAlphabets: false,
             specialChars: false,
@@ -247,34 +243,54 @@ const forgotPassword = asyncHandler(async (req, res) => {
         });
 
         if (user) {
-            // Store OTP and expiry in user document
             user.resetPasswordOTP = otp;
-            user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+            user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
             await user.save({ validateBeforeSave: false });
         }
         if (admin) {
-            // Store OTP and expiry in user document
             admin.resetPasswordOTP = otp;
-            admin.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+            admin.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
             await admin.save({ validateBeforeSave: false });
         }
 
-        // Send email with OTP
+        // Send email with OTP with better error handling
+        console.log('Attempting to send OTP email to:', email);
         const emailResult = await sendOTPEmail(email, otp);
+        console.log('Email result:', emailResult);
 
-        if (!emailResult.success) {
-            throw new Error('Failed to send OTP email');
+        if (!emailResult || !emailResult.success) {
+            // Clean up the OTP from database if email fails
+            if (user) {
+                user.resetPasswordOTP = undefined;
+                user.resetPasswordExpires = undefined;
+                await user.save({ validateBeforeSave: false });
+            }
+            if (admin) {
+                admin.resetPasswordOTP = undefined;
+                admin.resetPasswordExpires = undefined;
+                await admin.save({ validateBeforeSave: false });
+            }
+            
+            const errorMsg = emailResult?.message || 'Unknown email service error';
+            console.error('Email service error:', errorMsg);
+            throw new ApiError(500, `Failed to send OTP email: ${errorMsg}`);
         }
 
-    } catch (error) {
-        console.error('Error generating OTP:', error);
-        throw new ApiError(500, "Failed to generate OTP");
-    }
+        return res
+            .status(200)
+            .json(new ApiResponse(200, {}, "OTP sent to email successfully"))
 
-    // Generate OTP
-    return res
-        .status(200)
-        .json(new ApiResponse(200, {}, "OTP sent to email successfully"))
+    } catch (error) {
+        console.error('Error in forgotPassword:', error);
+        
+        // If it's already an ApiError, rethrow it
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        
+        // For other errors, wrap them
+        throw new ApiError(500, `Failed to process password reset request: ${error.message}`);
+    }
 })
 
 const verifyOTP = asyncHandler(async (req, res) => {
