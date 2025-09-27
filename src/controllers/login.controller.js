@@ -257,22 +257,66 @@ const forgotPassword = asyncHandler(async (req, res) => {
             console.log('Saved OTP to admin database');
         }
 
-        // Add timeout wrapper for email sending
+        // Try sending email with multiple attempts and shorter timeouts
         console.log('Attempting to send OTP email to:', email);
         
-        const emailPromise = sendOTPEmail(email, otp);
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Email sending timeout after 30 seconds')), 30000)
-        );
+        let emailResult = null;
+        let lastError = null;
+        const maxAttempts = 3;
+        const timeoutDuration = 10000; // Reduce to 10 seconds per attempt
 
-        let emailResult;
-        try {
-            emailResult = await Promise.race([emailPromise, timeoutPromise]);
-            console.log('Email result received:', emailResult);
-        } catch (emailError) {
-            console.error('Email sending failed:', emailError);
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                console.log(`Email attempt ${attempt}/${maxAttempts}`);
+                
+                const emailPromise = sendOTPEmail(email, otp);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error(`Email timeout after ${timeoutDuration/1000}s (attempt ${attempt})`)), timeoutDuration)
+                );
+
+                emailResult = await Promise.race([emailPromise, timeoutPromise]);
+                console.log(`Attempt ${attempt} result:`, emailResult);
+
+                // Check if successful
+                if (emailResult && emailResult.success) {
+                    console.log('OTP email sent successfully on attempt', attempt);
+                    break;
+                }
+
+                // If not successful, store the error and try again
+                lastError = emailResult?.error || emailResult?.message || 'Unknown error';
+                console.log(`Attempt ${attempt} failed:`, lastError);
+
+            } catch (attemptError) {
+                console.error(`Attempt ${attempt} failed with error:`, attemptError.message);
+                lastError = attemptError.message;
+            }
+
+            // Wait 2 seconds before next attempt (except on last attempt)
+            if (attempt < maxAttempts) {
+                console.log('Waiting 2 seconds before retry...');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+
+        // If all attempts failed, provide fallback options
+        if (!emailResult || !emailResult.success) {
+            console.error('All email attempts failed. Last error:', lastError);
             
-            // Clean up the OTP from database if email fails
+            // For development/testing, you might want to show the OTP in console
+            if (process.env.NODE_ENV === 'development' || process.env.SHOW_OTP_ON_FAIL === 'true') {
+                console.log(`EMAIL FAILED - OTP for ${email}: ${otp}`);
+                
+                return res
+                    .status(200)
+                    .json(new ApiResponse(200, { 
+                        devMode: true,
+                        message: "Email service temporarily unavailable. Check console for OTP.",
+                        otp: process.env.SHOW_OTP_IN_RESPONSE === 'true' ? otp : undefined
+                    }, "OTP generated (email service issue)"));
+            }
+
+            // Clean up the OTP from database if email completely fails
             if (user) {
                 user.resetPasswordOTP = undefined;
                 user.resetPasswordExpires = undefined;
@@ -284,32 +328,13 @@ const forgotPassword = asyncHandler(async (req, res) => {
                 await admin.save({ validateBeforeSave: false });
             }
             
-            throw new ApiError(500, `Failed to send OTP email: ${emailError.message}`);
-        }
-
-        // Check if email was successful
-        if (!emailResult) {
-            console.log('Email result is null/undefined');
-            throw new ApiError(500, 'Email service returned no response');
-        }
-
-        if (!emailResult.success) {
-            const errorMsg = emailResult?.message || 'Unknown email service error';
-            console.error('Email service error:', errorMsg);
+            // Provide more helpful error message
+            const isTimeoutError = lastError && lastError.includes('timeout');
+            const errorMessage = isTimeoutError 
+                ? 'Email service is currently slow. Please try again in a few minutes.'
+                : `Email service error: ${lastError}`;
             
-            // Clean up the OTP from database
-            if (user) {
-                user.resetPasswordOTP = undefined;
-                user.resetPasswordExpires = undefined;
-                await user.save({ validateBeforeSave: false });
-            }
-            if (admin) {
-                admin.resetPasswordOTP = undefined;
-                admin.resetPasswordExpires = undefined;
-                await admin.save({ validateBeforeSave: false });
-            }
-            
-            throw new ApiError(500, `Failed to send OTP email: ${errorMsg}`);
+            throw new ApiError(503, errorMessage); // 503 Service Unavailable
         }
 
         console.log('OTP email sent successfully');
