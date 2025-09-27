@@ -17,7 +17,7 @@ router.route("/editdetails/:_id").patch(verifyAdminJWT, editUserDetails)
 
 router.route("/user").get(verifyAdminJWT, getAllUser)
 
-router.route("/deleteuser").delete(verifyAdminJWT, deleteUser)
+router.route("/deleteuser/:userId").delete(verifyAdminJWT, deleteUser)
 
 router.route("/change-password").post(verifyAdminJWT, changeAdminPassword)
 

@@ -6,6 +6,7 @@ import ApiResponse from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
 import otpGenerator from 'otp-generator';
 import { sendOTPEmail } from '../services/OTPGenerate.js';
+import mongoose from 'mongoose';
 
 
 // const generateAccessAndRefreshToken = async (userId) => {
@@ -65,16 +66,16 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateUserDetails = asyncHandler(async (req, res) => {
-    const { currentPosition, company, location, phone, bio, linkedin, github } = req.body;
+    const {name , email, currentPosition, company, location, phone, bio, linkedin, github } = req.body;
 
-    if (!currentPosition || !company || !location || !phone || !bio || !linkedin || !github) {
-        throw new ApiError(400, "All fields are required");
-    }
+    
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
+                name,
+                email,
                 currentPosition,
                 company,
                 location,
@@ -130,10 +131,21 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 })
 
 const deleteUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
+    const { userId } = req.params;
+    
+    console.log('Attempting to delete user with ID:', userId); // Debug log
+    
+    if (!userId) {
+        throw new ApiError(400, "User ID is required");
+    }
+    
+    
+    const user = await User.findById(userId);
     if (!user) {
         throw new ApiError(404, "User not found");
     }
+    
+    // Delete avatar from cloudinary if exists
     if (user.avatar) {
         const avatarPublicId = extractPublicId(user.avatar);
         if (avatarPublicId) {
@@ -141,19 +153,11 @@ const deleteUser = asyncHandler(async (req, res) => {
         }
     }
 
-    await User.findByIdAndDelete(user._id);
-
-    // Clear cookies
-    const options = {
-        httpOnly: true,
-        secure: false,
-    };
+    await User.findByIdAndDelete(userId);
 
     return res
         .status(200)
-        .clearCookie('accessToken', options)
-        .clearCookie('refreshToken', options)
-        .json(new ApiResponse(200, {}, "User Deleted Successfully"));
+        .json(new ApiResponse(200, {}, "User deleted successfully"));
 });
 
 export {
