@@ -34,7 +34,7 @@ const generateAdminAccessAndRefreshToken = async (adminId) => {
 };
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken || req.body.token; // Add req.body.token
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken || req.body.token;
 
     if (!incomingRefreshToken) {
         throw new ApiError(401, "Unauthorized request");
@@ -96,11 +96,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
                 ))
         }
     } catch (error) {
-        console.error('Refresh token error:', error);
         throw new ApiError(401, error?.message || "Invalid refresh token");
     }
 })
-
 
 const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -242,71 +240,48 @@ const forgotPassword = asyncHandler(async (req, res) => {
             lowerCaseAlphabets: false
         });
 
-        console.log('Generated OTP:', otp);
-
         if (user) {
             user.resetPasswordOTP = otp;
             user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
             await user.save({ validateBeforeSave: false });
-            console.log('Saved OTP to user database');
         }
         if (admin) {
             admin.resetPasswordOTP = otp;
             admin.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
             await admin.save({ validateBeforeSave: false });
-            console.log('Saved OTP to admin database');
         }
 
-        // Try sending email with multiple attempts and shorter timeouts
-        console.log('Attempting to send OTP email to:', email);
-        
         let emailResult = null;
         let lastError = null;
         const maxAttempts = 3;
-        const timeoutDuration = 10000; // Reduce to 10 seconds per attempt
+        const timeoutDuration = 10000;
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                console.log(`Email attempt ${attempt}/${maxAttempts}`);
-                
                 const emailPromise = sendOTPEmail(email, otp);
                 const timeoutPromise = new Promise((_, reject) => 
                     setTimeout(() => reject(new Error(`Email timeout after ${timeoutDuration/1000}s (attempt ${attempt})`)), timeoutDuration)
                 );
 
                 emailResult = await Promise.race([emailPromise, timeoutPromise]);
-                console.log(`Attempt ${attempt} result:`, emailResult);
 
-                // Check if successful
                 if (emailResult && emailResult.success) {
-                    console.log('OTP email sent successfully on attempt', attempt);
                     break;
                 }
 
-                // If not successful, store the error and try again
                 lastError = emailResult?.error || emailResult?.message || 'Unknown error';
-                console.log(`Attempt ${attempt} failed:`, lastError);
 
             } catch (attemptError) {
-                console.error(`Attempt ${attempt} failed with error:`, attemptError.message);
                 lastError = attemptError.message;
             }
 
-            // Wait 2 seconds before next attempt (except on last attempt)
             if (attempt < maxAttempts) {
-                console.log('Waiting 2 seconds before retry...');
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
         }
 
-        // If all attempts failed, provide fallback options
         if (!emailResult || !emailResult.success) {
-            console.error('All email attempts failed. Last error:', lastError);
-            
-            // For development/testing, you might want to show the OTP in console
             if (process.env.NODE_ENV === 'development' || process.env.SHOW_OTP_ON_FAIL === 'true') {
-                console.log(`EMAIL FAILED - OTP for ${email}: ${otp}`);
-                
                 return res
                     .status(200)
                     .json(new ApiResponse(200, { 
@@ -316,7 +291,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
                     }, "OTP generated (email service issue)"));
             }
 
-            // Clean up the OTP from database if email completely fails
             if (user) {
                 user.resetPasswordOTP = undefined;
                 user.resetPasswordExpires = undefined;
@@ -328,29 +302,23 @@ const forgotPassword = asyncHandler(async (req, res) => {
                 await admin.save({ validateBeforeSave: false });
             }
             
-            // Provide more helpful error message
             const isTimeoutError = lastError && lastError.includes('timeout');
             const errorMessage = isTimeoutError 
                 ? 'Email service is currently slow. Please try again in a few minutes.'
                 : `Email service error: ${lastError}`;
             
-            throw new ApiError(503, errorMessage); // 503 Service Unavailable
+            throw new ApiError(503, errorMessage);
         }
 
-        console.log('OTP email sent successfully');
         return res
             .status(200)
             .json(new ApiResponse(200, {}, "OTP sent to email successfully"))
 
     } catch (error) {
-        console.error('Error in forgotPassword:', error);
-        
-        // If it's already an ApiError, rethrow it
         if (error instanceof ApiError) {
             throw error;
         }
         
-        // For other errors, wrap them
         throw new ApiError(500, `Failed to process password reset request: ${error.message}`);
     }
 })
@@ -373,11 +341,11 @@ const verifyOTP = asyncHandler(async (req, res) => {
         resetPasswordOTP: otp,
         resetPasswordExpires: { $gt: Date.now() }
     });
+    
     if (!user && !admin) {
         throw new ApiError(400, "Invalid or expired OTP");
     }
 
-    // OTP is valid, redirect to reset password page
     return res
         .status(200)
         .json(new ApiResponse(200, {}, "OTP verified ✅"))
@@ -400,13 +368,13 @@ const resetPassword = asyncHandler(async (req, res) => {
 
     const user = await User.findOne({
         email,
-        resetPasswordOTP: otp,  //token original
+        resetPasswordOTP: otp,
         resetPasswordExpires: { $gt: Date.now() }
     });
 
     const admin = await Admin.findOne({
         email,
-        resetPasswordOTP: otp,  //token original
+        resetPasswordOTP: otp,
         resetPasswordExpires: { $gt: Date.now() }
     });
 
@@ -414,7 +382,6 @@ const resetPassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid or expired token");
     }
 
-    // Reset password
     if (admin) {
         admin.password = newPassword;
         admin.resetPasswordOTP = undefined;
@@ -438,6 +405,6 @@ export {
     logout,
     forgotPassword,
     verifyOTP,
-    resetPassword
-    , refreshAccessToken
+    resetPassword,
+    refreshAccessToken
 }
