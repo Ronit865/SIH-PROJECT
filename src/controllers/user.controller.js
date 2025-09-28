@@ -59,7 +59,7 @@ const getAllUser = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).select('-password -refreshToken');
     return res
         .status(200)
         .json(new ApiResponse(200, user, "Current User Fetched Successfully"))

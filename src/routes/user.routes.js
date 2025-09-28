@@ -10,7 +10,7 @@ const router = express.Router();
 
 // router.route("/logout").post(verifyJWT, logoutUser)
 
-router.route("/user").get(verifyJWT, getAllUser)
+router.route("/alluser").get(verifyJWT, getAllUser)
 
 router.route("/change-password").post(verifyJWT, changeUserPassword)
 

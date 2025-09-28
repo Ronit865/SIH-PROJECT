@@ -15,7 +15,7 @@ router.route("/addcsv").post(verifyAdminJWT, upload.single("csv"), addStudentCsv
 
 router.route("/editdetails/:_id").patch(verifyAdminJWT, editUserDetails)
 
-router.route("/user").get(verifyAdminJWT, getAllUser)
+router.route("/alluser").get(verifyAdminJWT, getAllUser)
 
 router.route("/deleteuser/:userId").delete(verifyAdminJWT, deleteUser)
 
