@@ -3,25 +3,6 @@ import User from '../models/user.model.js';
 import ApiError from '../utils/ApiError.js';
 import { extractPublicId, uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import ApiResponse from '../utils/ApiResponse.js';
-import jwt from 'jsonwebtoken';
-import otpGenerator from 'otp-generator';
-import { sendOTPEmail } from '../services/OTPGenerate.js';
-import mongoose from 'mongoose';
-
-
-// const generateAccessAndRefreshToken = async (userId) => {
-//     try {
-//         const user = await User.findById(userId);
-//         const accessToken = await user.generateAccessToken();
-//         const refreshToken = await user.generateRefreshToken();
-//         user.refreshToken = refreshToken;
-//         await user.save({ validateBeforeSave: false });
-//         return { accessToken, refreshToken };
-//     } catch (err) {
-//         throw new ApiError(500, "Error generating Token")
-//     }
-// };
-
 
 const changeUserPassword = asyncHandler(async (req, res) => {
 
@@ -66,9 +47,8 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateUserDetails = asyncHandler(async (req, res) => {
-    const {name , email, currentPosition, company, location, phone, bio, linkedin, github } = req.body;
 
-    
+    const {name , email, currentPosition, company, location, phone, bio, linkedin, github } = req.body;
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
@@ -131,14 +111,12 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 })
 
 const deleteUser = asyncHandler(async (req, res) => {
+
     const { userId } = req.params;
-    
-    console.log('Attempting to delete user with ID:', userId); // Debug log
     
     if (!userId) {
         throw new ApiError(400, "User ID is required");
     }
-    
     
     const user = await User.findById(userId);
     if (!user) {
