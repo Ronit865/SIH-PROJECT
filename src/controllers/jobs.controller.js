@@ -103,10 +103,34 @@ const verifyJob = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, 'Job verified successfully', job));
 });
 
+const jobApply = asyncHandler(async (req, res) => {
+
+    const userId = req.user.id;
+
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+        throw new ApiError(404, 'Job not found');
+    }
+
+    if (job.applicants.includes(userId)){
+        throw new ApiError(400, 'You have already applied for this job');
+    }
+    // job.applicants.push is used to add the userId to the applicants array
+    job.applicants.push(userId);
+    await job.save();
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, 'Job applied successfully', job));
+
+});
+
 export {
     addJob,
     editJob,
     deleteJob,
     getAllJobs,
-    verifyJob
+    verifyJob,
+    jobApply
 }

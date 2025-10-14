@@ -84,6 +84,10 @@ const jobSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     },
+    applicants: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
 }, { timestamps: true });
 
 const Job = mongoose.model('Job', jobSchema);

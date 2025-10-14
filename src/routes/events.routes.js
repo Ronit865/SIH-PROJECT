@@ -1,8 +1,6 @@
 import express from 'express';
-import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyJWT } from '../middlewares/auth.middleware.js';
 import { addEvent, deleteEvent, getEvents, updateEvent, userEventJoin, userEventLeave } from '../controllers/event.controller.js';
-import { get } from 'mongoose';
-
 
 const router = express.Router();
 
@@ -14,9 +12,8 @@ router.route("/deleteEvent/:_id").delete(verifyAdminJWT, deleteEvent)
 
 router.route("/getEvents").get(getEvents)
 
-router.route("/addUserToEvent/:eventId").post(verifyAdminJWT, userEventJoin)
+router.route("/addUserToEvent/:eventID").post(verifyJWT, userEventJoin)
 
-router.route("/removeUserFromEvent/:eventId").post(verifyAdminJWT, userEventLeave)
-
+router.route("/removeUserFromEvent/:eventID").post(verifyJWT, userEventLeave)
 
 export default router;
