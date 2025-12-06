@@ -7,16 +7,16 @@ import Admin from "../models/admin.model.js"
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
     try {
-
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+        // Prioritize Authorization header over cookies for better cross-origin support
+        const token = req.header("Authorization")?.replace("Bearer ", "") || req.cookies?.accessToken;
 
         if (!token) {
             throw new ApiError(401, "Unauthorized Request")
         }
+        
         const decodeToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
 
         const user = await User.findById(decodeToken?._id).select("-password -refreshToken")
-        console.log('user:', user);
 
         if (!user) {
             throw new ApiError(404, "Invalid Access Token");
@@ -33,17 +33,18 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         } else {
             throw new ApiError(401, "Authentication failed");
         }
-        // return res.redirect('/login?error=Authentication%20required');
     }
-
 })
+
 export const verifyAdminJWT = asyncHandler(async (req, res, next) => {
     try {
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+        // Prioritize Authorization header over cookies
+        const token = req.header("Authorization")?.replace("Bearer ", "") || req.cookies?.accessToken;
 
         if (!token) {
             throw new ApiError(401, "Unauthorized Request")
         }
+        
         const decodeToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
 
         const admin = await Admin.findById(decodeToken?._id).select("-password -refreshToken")
@@ -66,11 +67,10 @@ export const verifyAdminJWT = asyncHandler(async (req, res, next) => {
     }
 })
 
-
-
 export const verifyUserOrAdmin = asyncHandler(async (req, res, next) => {
     try {
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+        // Prioritize Authorization header over cookies
+        const token = req.header("Authorization")?.replace("Bearer ", "") || req.cookies?.accessToken;
         
         if (!token) {
             throw new ApiError(401, "Unauthorized Request")

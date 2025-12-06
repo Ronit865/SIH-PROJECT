@@ -9,7 +9,7 @@ router.route('/addJob').post(verifyJWT, addJob);
 
 router.route('/editJob/:id').patch(verifyJWT, editJob);
 
-router.route('/deleteJob/:id').delete(verifyJWT, deleteJob);
+router.route('/deleteJob/:id').delete(verifyAdminJWT, deleteJob);
 
 router.route('/getAllJobs').get(getAllJobs);
 
