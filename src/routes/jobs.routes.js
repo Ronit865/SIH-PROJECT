@@ -1,5 +1,5 @@
 import express from 'express';
-import { addJob, editJob, deleteJob, getAllJobs, verifyJob, jobApply } from '../controllers/jobs.controller.js';
+import { addJob, editJob, deleteJob, getAllJobs, verifyJob, jobApply, jobApplicants, getMyPostedJobs, jobRejectByAdmin } from '../controllers/jobs.controller.js';
 import { verifyAdminJWT , verifyJWT } from '../middlewares/auth.middleware.js';
 
 
@@ -9,12 +9,18 @@ router.route('/addJob').post(verifyJWT, addJob);
 
 router.route('/editJob/:id').patch(verifyJWT, editJob);
 
-router.route('/deleteJob/:id').delete(verifyAdminJWT, deleteJob);
+router.route('/deleteJob/:id').delete(verifyJWT, deleteJob);
+
+router.route('/rejectJob/:id').delete(verifyAdminJWT, jobRejectByAdmin);
 
 router.route('/getAllJobs').get(getAllJobs);
+
+router.route('/getMyPostedJobs').get(verifyJWT, getMyPostedJobs);
 
 router.route('/verifyJob/:id').patch(verifyAdminJWT, verifyJob);
 
 router.route('/jobApply/:id').post(verifyJWT, jobApply);
+
+router.route('/jobApplicants/:id').get(jobApplicants);
 
 export default router;

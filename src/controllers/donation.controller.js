@@ -13,7 +13,9 @@ const addCampaign = asyncHandler(async (req, res) => {
     });
 
     await newCampaign.save();
-    res.status(201).json(new ApiResponse(201, newCampaign, "Donation created successfully"));
+    res
+    .status(201)
+    .json(new ApiResponse(201, newCampaign, "Donation created successfully"));
 });
 
 const editCampaign = asyncHandler(async (req, res) => {
@@ -30,7 +32,9 @@ const editCampaign = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Donation not found");
     }
 
-    res.status(200).json(new ApiResponse(200, updatedCampaign, "Donation updated successfully"));
+    res
+    .status(200)
+    .json(new ApiResponse(200, updatedCampaign, "Donation updated successfully"));
 });
 
 const deleteCampaign = asyncHandler(async (req, res) => {
@@ -40,17 +44,107 @@ const deleteCampaign = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Donation not found");
     }
 
-    res.status(200).json(new ApiResponse(200, deletedCampaign, "Donation deleted successfully"));
+    res
+    .status(200)
+    .json(new ApiResponse(200, deletedCampaign, "Donation deleted successfully"));
+});
+
+const donationAmount = asyncHandler(async (req, res) => {
+    const userId = req.user?._id || req.user?.id;
+    const { id } = req.params;
+    const { amount } = req.body;
+    
+    // Validate inputs
+    if (!userId) {
+        throw new ApiError(401, "User not authenticated");
+    }
+    
+    if (!amount || amount <= 0) {
+        throw new ApiError(400, "Please provide a valid donation amount");
+    }
+    
+    const campaign = await Donation.findById(id);
+    if (!campaign) {
+        throw new ApiError(404, "Donation campaign not found");
+    }
+
+    // Convert to numbers for proper comparison
+    const numAmount = Number(amount);
+    const currentRaised = Number(campaign.raisedAmount) || 0;
+    const campaignGoal = Number(campaign.goal);
+
+    if (currentRaised + numAmount > campaignGoal) {
+        throw new ApiError(400, "Donation exceeds goal amount");
+    }
+
+    // Update raised amount
+    campaign.raisedAmount = currentRaised + numAmount;
+
+    // Ensure donors array exists and is clean
+    if (!Array.isArray(campaign.donors)) {
+        campaign.donors = [];
+    }
+
+    // Filter out any invalid donors
+    campaign.donors = campaign.donors.filter(d => d.userId && d.amount);
+
+    // Find existing donor or add new one
+    const existingDonorIndex = campaign.donors.findIndex(
+        d => d.userId.toString() === userId.toString()
+    );
+    
+    if (existingDonorIndex !== -1) {
+        campaign.donors[existingDonorIndex].amount = Number(campaign.donors[existingDonorIndex].amount) + numAmount;
+    } else {
+        campaign.donors.push({ 
+            userId: userId.toString(),
+            name: req.user?.name || 'Anonymous',
+            email: req.user?.email || 'anonymous@example.com',
+            amount: numAmount
+        });
+    }
+
+    await campaign.save();
+    res
+    .status(200)
+    .json(new ApiResponse(200, campaign, "Donation amount updated successfully"));
 });
 
 const getCampaigns = asyncHandler(async (req, res) => {
     const campaigns = await Donation.find();
-    res.status(200).json(new ApiResponse(200, campaigns, "Donations retrieved successfully"));
+    res
+    .status(200)
+    .json(new ApiResponse(200, campaigns, "Donations retrieved successfully"));
+});
+
+const getCampaignDonors = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const campaign = await Donation.findById(id).populate('donors.userId', 'name email');
+     
+    if (!campaign) {
+        throw new ApiError(404, "Donation campaign not found");
+    }
+
+    // Transform the donors array to flatten the structure
+    const formattedDonors = campaign.donors.map(donor => ({
+        _id: donor._id,
+        userId: donor.userId._id,
+        name: donor.userId.name,
+        email: donor.userId.email,
+        amount: donor.amount,
+        donatedAt: donor.donatedAt
+    }));
+
+    res
+    .status(200)
+    .json(new ApiResponse(200, formattedDonors, "Donors retrieved successfully"));
 });
 
 export {
     addCampaign,
     editCampaign,
     getCampaigns,
-    deleteCampaign
+    deleteCampaign,
+    donationAmount,
+    getCampaignDonors
 };
