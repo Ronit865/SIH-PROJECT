@@ -25,6 +25,7 @@ import eventRouter from './routes/events.routes.js';
 import loginRouter from './routes/login.routes.js';
 import donationRouter from './routes/donation.routes.js';
 import jobRouter from './routes/jobs.routes.js';
+import emailRouter from './routes/email.routes.js';
 
 app.use('/api/',loginRouter)
 app.use('/api/admin',adminRouter)
@@ -32,5 +33,6 @@ app.use('/api/users',userRouter)
 app.use('/api/events',eventRouter)
 app.use('/api/jobs', jobRouter);
 app.use('/api/donations',donationRouter)
+app.use('/api/emails', emailRouter);
 
 export default app;

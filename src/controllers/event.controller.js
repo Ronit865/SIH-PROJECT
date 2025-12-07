@@ -165,11 +165,27 @@ const userEventLeave = asyncHandler(async (req, res) => {
     }
 });
 
+const eventParticipants = asyncHandler(async (req, res) => {
+    const { eventID } = req.params;
+    try {
+        const event = await Event.findById(eventID).populate('participants', 'name email avatar course');
+        if (!event) {
+            throw new ApiError(404, "Event not found");
+        }
+        return res
+            .status(200)
+            .json(new ApiResponse(200, event.participants, "Event participants fetched successfully"));
+    } catch (error) {
+        throw new ApiError(500, "Failed to fetch event participants");
+    }
+});
+
 export {
     addEvent,
     getEvents,
     updateEvent,
     deleteEvent,
     userEventJoin,
-    userEventLeave
+    userEventLeave,
+    eventParticipants
 };
