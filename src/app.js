@@ -28,6 +28,8 @@ import jobRouter from './routes/jobs.routes.js';
 import emailRouter from './routes/email.routes.js';
 import postRouter from './routes/post.routes.js';
 import notificationRouter from './routes/notification.routes.js';
+import connectionRouter from './routes/connection.routes.js';
+import messageRouter from './routes/message.routes.js';
 
 app.use('/api/',loginRouter)
 app.use('/api/admin',adminRouter)
@@ -38,5 +40,7 @@ app.use('/api/donations',donationRouter)
 app.use('/api/emails', emailRouter);
 app.use('/api/communications', postRouter);
 app.use('/api/notifications', notificationRouter);
+app.use('/api/connections', connectionRouter);
+app.use('/api/messages', messageRouter);
 
 export default app;

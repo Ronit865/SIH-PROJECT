@@ -15,7 +15,7 @@ const notificationSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ['reply', 'comment', 'upvote', 'mention', 'post'],
+      enum: ['reply', 'comment', 'upvote', 'mention', 'post', 'connection', 'message'],
       required: true
     },
     title: {
