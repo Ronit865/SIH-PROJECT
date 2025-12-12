@@ -221,6 +221,16 @@ const deleteComment = asyncHandler(async (req, res) => {
     throw new ApiError(403, "You are not authorized to delete this comment");
   }
 
+  // Check if comment is within 24 hours (admins can delete anytime)
+  if (req.user.role !== 'admin') {
+    const commentAge = Date.now() - new Date(comment.createdAt).getTime();
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    
+    if (commentAge > twentyFourHours) {
+      throw new ApiError(403, "Comments can only be deleted within 24 hours of posting");
+    }
+  }
+
   comment.isActive = false;
   await comment.save();
 

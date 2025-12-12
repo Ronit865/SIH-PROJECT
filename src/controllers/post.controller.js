@@ -175,6 +175,16 @@ const deletePost = asyncHandler(async (req, res) => {
     throw new ApiError(403, "You are not authorized to delete this post");
   }
 
+  // Check if post is within 24 hours (admins can delete anytime)
+  if (req.user.role !== 'admin') {
+    const postAge = Date.now() - new Date(post.createdAt).getTime();
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    
+    if (postAge > twentyFourHours) {
+      throw new ApiError(403, "Posts can only be deleted within 24 hours of posting");
+    }
+  }
+
   post.isActive = false;
   await post.save();
 
