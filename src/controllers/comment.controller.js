@@ -4,6 +4,7 @@ import Post from '../models/post.model.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { createNotification } from './notification.controller.js';
+import { containsInappropriateContent } from '../utils/contentFilter.js';
 
 // Create a new comment
 const createComment = asyncHandler(async (req, res) => {
@@ -11,6 +12,11 @@ const createComment = asyncHandler(async (req, res) => {
 
   if (!content || !content.trim()) {
     throw new ApiError(400, "Comment content is required");
+  }
+
+  // Check for inappropriate content
+  if (containsInappropriateContent(content)) {
+    throw new ApiError(400, "Your comment contains inappropriate content. Please remove offensive language and try again.");
   }
 
   if (!postId) {

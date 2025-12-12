@@ -5,7 +5,8 @@ import {
   sendMessage,
   getConversationMessages,
   markMessagesAsRead,
-  getUnreadCount
+  getUnreadCount,
+  deleteMessage
 } from "../controllers/message.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -23,5 +24,6 @@ router.post("/send", sendMessage);
 router.get("/conversation/:conversationId", getConversationMessages);
 router.patch("/conversation/:conversationId/read", markMessagesAsRead);
 router.get("/unread-count", getUnreadCount);
+router.delete("/:messageId", deleteMessage);
 
 export default router;

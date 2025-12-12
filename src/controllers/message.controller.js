@@ -4,6 +4,7 @@ import { Notification } from "../models/notification.model.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { containsInappropriateContent } from "../utils/contentFilter.js";
 
 // Get or create conversation
 export const getOrCreateConversation = asyncHandler(async (req, res) => {
@@ -75,6 +76,11 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
   if (!conversationId || !content || !content.trim()) {
     throw new ApiError(400, "Conversation ID and message content are required");
+  }
+
+  // Check for inappropriate content
+  if (containsInappropriateContent(content)) {
+    throw new ApiError(400, "Your message contains inappropriate content. Please remove offensive language and try again.");
   }
 
   // Verify conversation exists and user is participant
@@ -241,5 +247,53 @@ export const getUnreadCount = asyncHandler(async (req, res) => {
 
   res.status(200).json(
     new ApiResponse(200, { unreadCount }, "Unread count retrieved successfully")
+  );
+});
+
+// Delete message (only within 24 hours)
+export const deleteMessage = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+
+  // Find the message
+  const message = await Message.findById(messageId);
+  
+  if (!message) {
+    throw new ApiError(404, "Message not found");
+  }
+
+  // Verify the user is the sender
+  if (message.sender.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You can only delete your own messages");
+  }
+
+  // Check if message is within 24 hours
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  if (new Date(message.createdAt) < twentyFourHoursAgo) {
+    throw new ApiError(403, "Messages can only be deleted within 24 hours of sending");
+  }
+
+  // Delete the message
+  await Message.findByIdAndDelete(messageId);
+
+  // Update conversation's last message if this was the last message
+  const conversation = await Conversation.findById(message.conversation);
+  if (conversation && conversation.lastMessage?.toString() === messageId) {
+    // Find the new last message
+    const lastMessage = await Message.findOne({
+      conversation: message.conversation
+    }).sort({ createdAt: -1 });
+
+    if (lastMessage) {
+      conversation.lastMessage = lastMessage._id;
+      conversation.lastMessageTime = lastMessage.createdAt;
+    } else {
+      conversation.lastMessage = null;
+      conversation.lastMessageTime = null;
+    }
+    await conversation.save();
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, {}, "Message deleted successfully")
   );
 });

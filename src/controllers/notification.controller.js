@@ -5,11 +5,17 @@ import asyncHandler from "../utils/asyncHandler.js";
 
 // Get all notifications for logged-in user
 export const getNotifications = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, unreadOnly = false } = req.query;
+  const { page = 1, limit = 20, unreadOnly = false, type } = req.query;
   
   const query = { recipient: req.user._id };
   if (unreadOnly === 'true') {
     query.read = false;
+  }
+  
+  // Filter by type if provided (can be comma-separated for multiple types)
+  if (type) {
+    const types = type.split(',').map(t => t.trim());
+    query.type = { $in: types };
   }
 
   const notifications = await Notification.find(query)

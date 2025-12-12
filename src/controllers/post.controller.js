@@ -5,6 +5,7 @@ import User from '../models/user.model.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { uploadOnCloudinary, deleteFromCloudinary, extractPublicId } from '../utils/cloudinary.js';
+import { containsInappropriateContent } from '../utils/contentFilter.js';
 
 // Create a new post
 const createPost = asyncHandler(async (req, res) => {
@@ -12,6 +13,11 @@ const createPost = asyncHandler(async (req, res) => {
 
   if (!content || !content.trim()) {
     throw new ApiError(400, "Post content is required");
+  }
+
+  // Check for inappropriate content
+  if (containsInappropriateContent(content)) {
+    throw new ApiError(400, "Your post contains inappropriate content. Please remove offensive language and try again.");
   }
 
   if (!category) {
