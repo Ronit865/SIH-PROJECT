@@ -6,7 +6,7 @@ const app = express();
 
 //Basic middleware
 app.use(cors({
-  origin: ['https://allynet-app.vercel.app','http://localhost:5173'], 
+  origin: ['https://allynet-app.vercel.app','http://localhost:5173',"https://t9655c8p-5173.inc1.devtunnels.ms"], 
   credentials: true, 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Set-Cookie', 'Cookie', 'X-Requested-With'],
