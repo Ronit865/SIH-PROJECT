@@ -1,5 +1,5 @@
 import express from 'express';
-import { changeUserPassword,  getAllUser,  getCurrentUser,  updateUserAvatar,  updateUserDetails} from '../controllers/user.controller.js';
+import { changeUserPassword,  getAllUser,  getCurrentUser,  getUserById,  updateUserAvatar,  updateUserDetails} from '../controllers/user.controller.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import User from '../models/user.model.js';
@@ -15,6 +15,8 @@ router.route("/alluser").get(verifyJWT, getAllUser)
 router.route("/change-password").post(verifyJWT, changeUserPassword)
 
 router.route("/user").get(verifyJWT, getCurrentUser)
+
+router.route("/:userId").get(verifyJWT, getUserById)
 
 router.route("/update-user").patch(verifyJWT, updateUserDetails)
 
