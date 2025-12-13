@@ -151,30 +151,37 @@ export const getConnectionStatus = asyncHandler(async (req, res) => {
 export const getConnections = asyncHandler(async (req, res) => {
   const { status = 'accepted' } = req.query;
 
-  const connections = await Connection.find({
-    $or: [
-      { requester: req.user._id, status },
-      { recipient: req.user._id, status }
-    ]
-  })
-    .populate('requester', 'name avatar email graduationYear currentPosition company')
-    .populate('recipient', 'name avatar email graduationYear currentPosition company')
-    .sort({ createdAt: -1 });
+  try {
+    const connections = await Connection.find({
+      $or: [
+        { requester: req.user._id, status },
+        { recipient: req.user._id, status }
+      ]
+    })
+      .populate('requester', 'name avatar email graduationYear currentPosition company')
+      .populate('recipient', 'name avatar email graduationYear currentPosition company')
+      .sort({ createdAt: -1 });
 
-  // Transform data to show the other user
-  const transformedConnections = connections.map(conn => {
-    const isRequester = conn.requester._id.toString() === req.user._id.toString();
-    return {
-      _id: conn._id,
-      user: isRequester ? conn.recipient : conn.requester,
-      status: conn.status,
-      connectedAt: conn.updatedAt
-    };
-  });
+    // Transform data to show the other user
+    const transformedConnections = connections
+      .filter(conn => conn.requester && conn.recipient) // Filter out connections with missing users
+      .map(conn => {
+        const isRequester = conn.requester._id.toString() === req.user._id.toString();
+        return {
+          _id: conn._id,
+          user: isRequester ? conn.recipient : conn.requester,
+          status: conn.status,
+          connectedAt: conn.updatedAt
+        };
+      });
 
-  res.status(200).json(
-    new ApiResponse(200, transformedConnections, "Connections retrieved successfully")
-  );
+    res.status(200).json(
+      new ApiResponse(200, transformedConnections, "Connections retrieved successfully")
+    );
+  } catch (error) {
+    console.error("Error in getConnections:", error);
+    throw new ApiError(500, `Failed to retrieve connections: ${error.message}`);
+  }
 });
 
 // Get pending connection requests
