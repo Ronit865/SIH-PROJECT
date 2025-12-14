@@ -171,6 +171,57 @@ const getRecentDonors = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, allDonors, "Recent donors retrieved successfully"));
 });
 
+const getDonationStats = asyncHandler(async (req, res) => {
+    // Get all campaigns
+    const campaigns = await Donation.find();
+    
+    // Calculate total raised across all campaigns
+    const totalRaised = campaigns.reduce((sum, campaign) => {
+        return sum + (Number(campaign.raisedAmount) || 0);
+    }, 0);
+    
+    // Calculate total goal across all campaigns
+    const totalGoal = campaigns.reduce((sum, campaign) => {
+        return sum + (Number(campaign.goal) || 0);
+    }, 0);
+    
+    // Get unique donors across all campaigns
+    const uniqueDonorIds = new Set();
+    let totalDonations = 0;
+    
+    campaigns.forEach(campaign => {
+        if (campaign.donors && Array.isArray(campaign.donors)) {
+            campaign.donors.forEach(donor => {
+                if (donor.userId) {
+                    uniqueDonorIds.add(donor.userId.toString());
+                    totalDonations += 1;
+                }
+            });
+        }
+    });
+    
+    const activeDonors = uniqueDonorIds.size;
+    
+    // Calculate average donation
+    const avgDonation = activeDonors > 0 ? totalRaised / activeDonors : 0;
+    
+    // Calculate campaign goal percentage
+    const campaignGoalPercentage = totalGoal > 0 ? (totalRaised / totalGoal) * 100 : 0;
+    
+    const stats = {
+        totalRaised,
+        activeDonors,
+        avgDonation,
+        campaignGoalPercentage,
+        totalGoal,
+        totalCampaigns: campaigns.length
+    };
+    
+    res
+    .status(200)
+    .json(new ApiResponse(200, stats, "Donation statistics retrieved successfully"));
+});
+
 export {
     addCampaign,
     editCampaign,
@@ -178,5 +229,6 @@ export {
     deleteCampaign,
     donationAmount,
     getCampaignDonors,
-    getRecentDonors
+    getRecentDonors,
+    getDonationStats
 };

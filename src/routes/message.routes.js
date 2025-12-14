@@ -8,12 +8,12 @@ import {
   getUnreadCount,
   deleteMessage
 } from "../controllers/message.controller.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyUserOrAdmin } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(verifyJWT);
+// All routes require authentication (user or admin)
+router.use(verifyUserOrAdmin);
 
 // Conversation routes
 router.post("/conversation", getOrCreateConversation);

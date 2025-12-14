@@ -27,9 +27,9 @@ const sendBulkEmails = asyncHandler(async (req, res) => {
     res
         .status(200)
         .json(new ApiResponse(
-            true, 
-            `Bulk emails sent. Success: ${result.totalSent}, Failed: ${result.totalFailed}`, 
-            result
+            200, 
+            result,
+            `Bulk emails sent. Success: ${result.totalSent}, Failed: ${result.totalFailed}`
         ));
 });
 

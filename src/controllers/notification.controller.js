@@ -7,7 +7,8 @@ import asyncHandler from "../utils/asyncHandler.js";
 export const getNotifications = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, unreadOnly = false, type } = req.query;
   
-  const query = { recipient: req.user._id };
+  const currentUser = req.user || req.admin;
+  const query = { recipient: currentUser._id };
   if (unreadOnly === 'true') {
     query.read = false;
   }
@@ -27,7 +28,7 @@ export const getNotifications = asyncHandler(async (req, res) => {
 
   const total = await Notification.countDocuments(query);
   const unreadCount = await Notification.countDocuments({ 
-    recipient: req.user._id, 
+    recipient: currentUser._id, 
     read: false 
   });
 
@@ -49,9 +50,10 @@ export const getNotifications = asyncHandler(async (req, res) => {
 export const markAsRead = asyncHandler(async (req, res) => {
   const { notificationId } = req.params;
 
+  const currentUser = req.user || req.admin;
   const notification = await Notification.findOne({
     _id: notificationId,
-    recipient: req.user._id
+    recipient: currentUser._id
   });
 
   if (!notification) {
@@ -68,8 +70,9 @@ export const markAsRead = asyncHandler(async (req, res) => {
 
 // Mark all notifications as read
 export const markAllAsRead = asyncHandler(async (req, res) => {
+  const currentUser = req.user || req.admin;
   await Notification.updateMany(
-    { recipient: req.user._id, read: false },
+    { recipient: currentUser._id, read: false },
     { read: true }
   );
 
@@ -82,9 +85,10 @@ export const markAllAsRead = asyncHandler(async (req, res) => {
 export const deleteNotification = asyncHandler(async (req, res) => {
   const { notificationId } = req.params;
 
+  const currentUser = req.user || req.admin;
   const notification = await Notification.findOneAndDelete({
     _id: notificationId,
-    recipient: req.user._id
+    recipient: currentUser._id
   });
 
   if (!notification) {
@@ -98,8 +102,9 @@ export const deleteNotification = asyncHandler(async (req, res) => {
 
 // Get unread notification count
 export const getUnreadCount = asyncHandler(async (req, res) => {
+  const currentUser = req.user || req.admin;
   const unreadCount = await Notification.countDocuments({
-    recipient: req.user._id,
+    recipient: currentUser._id,
     read: false
   });
 

@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifyAdminJWT, verifyJWT } from '../middlewares/auth.middleware.js';
-import { addCampaign, deleteCampaign, donationAmount, editCampaign, getCampaignDonors, getCampaigns, getRecentDonors } from '../controllers/donation.controller.js';
+import { addCampaign, deleteCampaign, donationAmount, editCampaign, getCampaignDonors, getCampaigns, getRecentDonors, getDonationStats } from '../controllers/donation.controller.js';
 
 const router = express.Router();
 
@@ -19,5 +19,7 @@ router.route("/donationAmount/:id").post(verifyJWT,donationAmount);
 router.route("/getDonors/:id").get(getCampaignDonors);
 
 router.route("/getRecentDonors").get(getRecentDonors);
+
+router.route("/getDonationStats").get(getDonationStats);
 
 export default router;

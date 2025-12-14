@@ -14,19 +14,20 @@ export const getOrCreateConversation = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Participant ID is required");
   }
 
-  if (participantId === req.user._id.toString()) {
+  const currentUser = req.user || req.admin;
+  if (participantId === currentUser._id.toString()) {
     throw new ApiError(400, "Cannot create conversation with yourself");
   }
 
   // Find existing conversation
   let conversation = await Conversation.findOne({
-    participants: { $all: [req.user._id, participantId] }
+    participants: { $all: [currentUser._id, participantId] }
   }).populate('participants', 'name avatar email currentPosition graduationYear');
 
   // Create new conversation if doesn't exist
   if (!conversation) {
     conversation = await Conversation.create({
-      participants: [req.user._id, participantId]
+      participants: [currentUser._id, participantId]
     });
 
     conversation = await Conversation.findById(conversation._id)
@@ -40,8 +41,9 @@ export const getOrCreateConversation = asyncHandler(async (req, res) => {
 
 // Get all conversations for user
 export const getUserConversations = asyncHandler(async (req, res) => {
+  const currentUser = req.user || req.admin;
   const conversations = await Conversation.find({
-    participants: req.user._id
+    participants: currentUser._id
   })
     .populate('participants', 'name avatar email currentPosition graduationYear')
     .populate({
@@ -53,7 +55,7 @@ export const getUserConversations = asyncHandler(async (req, res) => {
   // Transform to show the other participant
   const transformedConversations = conversations.map(conv => {
     const otherParticipant = conv.participants.find(
-      p => p._id.toString() !== req.user._id.toString()
+      p => p._id.toString() !== currentUser._id.toString()
     );
 
     return {
@@ -90,8 +92,9 @@ export const sendMessage = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Conversation not found");
   }
 
+  const currentUser = req.user || req.admin;
   const isParticipant = conversation.participants.some(
-    p => p.toString() === req.user._id.toString()
+    p => p.toString() === currentUser._id.toString()
   );
 
   if (!isParticipant) {
@@ -101,7 +104,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
   // Create message
   const message = await Message.create({
     conversation: conversationId,
-    sender: req.user._id,
+    sender: currentUser._id,
     content: content.trim()
   });
 
@@ -112,17 +115,17 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
   // Get the recipient (other participant)
   const recipient = conversation.participants.find(
-    p => p.toString() !== req.user._id.toString()
+    p => p.toString() !== currentUser._id.toString()
   );
 
   // Create notification for recipient
   if (recipient) {
     await Notification.create({
       recipient: recipient,
-      sender: req.user._id,
+      sender: currentUser._id,
       type: 'message',
       title: 'New Message',
-      message: `${req.user.name} sent you a message`
+      message: `${currentUser.name} sent you a message`
     });
   }
 
@@ -146,8 +149,9 @@ export const getConversationMessages = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Conversation not found");
   }
 
+  const currentUser = req.user || req.admin;
   const isParticipant = conversation.participants.some(
-    p => p.toString() === req.user._id.toString()
+    p => p.toString() === currentUser._id.toString()
   );
 
   if (!isParticipant) {
@@ -172,7 +176,7 @@ export const getConversationMessages = asyncHandler(async (req, res) => {
   await Message.updateMany(
     {
       conversation: conversationId,
-      sender: { $ne: req.user._id },
+      sender: { $ne: currentUser._id },
       read: false
     },
     {
@@ -205,8 +209,9 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Conversation not found");
   }
 
+  const currentUser = req.user || req.admin;
   const isParticipant = conversation.participants.some(
-    p => p.toString() === req.user._id.toString()
+    p => p.toString() === currentUser._id.toString()
   );
 
   if (!isParticipant) {
@@ -217,7 +222,7 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
   await Message.updateMany(
     {
       conversation: conversationId,
-      sender: { $ne: req.user._id },
+      sender: { $ne: currentUser._id },
       read: false
     },
     {
@@ -233,15 +238,16 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
 
 // Get unread message count
 export const getUnreadCount = asyncHandler(async (req, res) => {
+  const currentUser = req.user || req.admin;
   const conversations = await Conversation.find({
-    participants: req.user._id
+    participants: currentUser._id
   });
 
   const conversationIds = conversations.map(c => c._id);
 
   const unreadCount = await Message.countDocuments({
     conversation: { $in: conversationIds },
-    sender: { $ne: req.user._id },
+    sender: { $ne: currentUser._id },
     read: false
   });
 
@@ -262,7 +268,8 @@ export const deleteMessage = asyncHandler(async (req, res) => {
   }
 
   // Verify the user is the sender
-  if (message.sender.toString() !== req.user._id.toString()) {
+  const currentUser = req.user || req.admin;
+  if (message.sender.toString() !== currentUser._id.toString()) {
     throw new ApiError(403, "You can only delete your own messages");
   }
 

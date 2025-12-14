@@ -25,6 +25,8 @@ router.route("/update-avatar").patch(verifyAdminJWT, upload.single("avatar"), up
 
 router.route("/current-admin").get(verifyAdminJWT, getCurrentAdmin);
 
+router.route("/current").get(verifyAdminJWT, getCurrentAdmin);
+
 router.route("/update-profile").patch(verifyAdminJWT, updateAdminProfile);
 
 export default router;

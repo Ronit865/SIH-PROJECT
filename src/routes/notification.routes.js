@@ -6,12 +6,12 @@ import {
   deleteNotification,
   getUnreadCount
 } from "../controllers/notification.controller.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyUserOrAdmin } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// All routes require authentication
-router.use(verifyJWT);
+// All routes require authentication (user or admin)
+router.use(verifyUserOrAdmin);
 
 router.get("/", getNotifications);
 router.get("/unread-count", getUnreadCount);
