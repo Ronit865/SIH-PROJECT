@@ -140,11 +140,43 @@ const getCampaignDonors = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, formattedDonors, "Donors retrieved successfully"));
 });
 
+const getRecentDonors = asyncHandler(async (req, res) => {
+    // Get all campaigns with donors
+    const campaigns = await Donation.find().populate('donors.userId', 'name email graduationYear');
+    
+    // Collect all donors from all campaigns
+    const allDonors = [];
+    campaigns.forEach(campaign => {
+        if (campaign.donors && campaign.donors.length > 0) {
+            campaign.donors.forEach(donor => {
+                allDonors.push({
+                    _id: donor._id,
+                    name: donor.userId?.name || 'Anonymous',
+                    email: donor.userId?.email || 'donor@anonymous.com',
+                    graduationYear: donor.userId?.graduationYear,
+                    campaign: campaign.name,
+                    amount: donor.amount,
+                    donatedAt: donor.donatedAt,
+                    status: 'completed' // You can make this dynamic based on payment status if needed
+                });
+            });
+        }
+    });
+
+    // Sort by donation date (most recent first)
+    allDonors.sort((a, b) => new Date(b.donatedAt) - new Date(a.donatedAt));
+
+    res
+    .status(200)
+    .json(new ApiResponse(200, allDonors, "Recent donors retrieved successfully"));
+});
+
 export {
     addCampaign,
     editCampaign,
     getCampaigns,
     deleteCampaign,
     donationAmount,
-    getCampaignDonors
+    getCampaignDonors,
+    getRecentDonors
 };

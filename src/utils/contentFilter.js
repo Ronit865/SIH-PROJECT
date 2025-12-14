@@ -2,35 +2,55 @@
 // English, Hindi, and Gujarati abusive words and their variations
 
 const inappropriateWords = [
-  // English profanity and slurs
-  'fuck', 'fucking', 'fucker', 'fucked', 'fucks', 'shit', 'shitting', 'shitty', 'shits',
-  'bitch', 'bitching', 'bitches', 'asshole', 'assholes', 'bastard', 'bastards',
-  'damn', 'damned', 'dammit', 'crap', 'crappy', 'dick', 'dicks', 'cock', 'cocks',
-  'pussy', 'pussies', 'whore', 'whores', 'slut', 'sluts', 'slutty', 'cunt', 'cunts',
-  'fag', 'faggot', 'fags', 'nigger', 'nigga', 'niggas', 'retard', 'retarded', 'retards',
-  'piss', 'pissed', 'pissing', 'motherfucker', 'motherfuckers', 'mofo', 'mfer',
-  'bullshit', 'ass', 'arse', 'douche', 'douchebag', 'screw', 'screwed',
-  'jackass', 'dumbass', 'dipshit', 'horseshit', 'chickenshit', 'asshat',
-  'bellend', 'wanker', 'twat', 'prick', 'tosser', 'bollocks', 'bugger',
+  // English profanity and slurs (only severe/explicit words to avoid false positives)
+  'fuck', 'fucking', 'fucker', 'fucked', 'fucks', 'motherfucker', 'motherfuckers',
+  'shit', 'shitting', 'shitty', 'shits', 'bullshit',
+  'bitch', 'bitching', 'bitches', 'asshole', 'assholes',
+  'bastard', 'bastards', 'whore', 'whores',
+  'slut', 'sluts', 'slutty', 'cunt', 'cunts',
+  'faggot', 'nigger', 'nigga', 'niggas',
+  'mofo', 'mfer', 'dumbass', 'jackass', 'dipshit', 'asshat',
   'rape', 'raping', 'rapist', 'molest', 'pedophile', 'pedo',
-  'sex', 'sexy', 'porn', 'pornography', 'nude', 'naked', 'xxx',
-  'dildo', 'viagra', 'penis', 'vagina', 'boobs', 'tits', 'titties',
-  'cumshot', 'orgasm', 'masturbate', 'horny', 'anal',
+  'porn', 'pornography', 'xxx',
+  'cumshot', 'masturbate',
   
-  // Common shortforms and variations
-  'wtf', 'wth', 'stfu', 'gtfo', 'mf', 'mfer', 'pos', 'sob', 'bs', 'omfg', 'af',
-  'lmao', 'lmfao', 'smh', 'jfc', 'fml', 'milf', 'dilf', 'thot',
+  // Common shortforms (only explicit ones)
+  'wtf', 'stfu', 'gtfo', 'omfg',
   
-  // Hindi abusive words (romanized) - expanded
+  // Hindi abusive words (romanized) - only explicit offensive terms
   'chutiya', 'chutiye', 'chutiyapa', 'chut', 'choot', 'chod', 'chodu', 'chodna',
-  'madarchod', 'maderchod', 'mc', 'mkc', 'maa ki chut', 'maaki', 'maki',
-  'bhenchod', 'bahenchod', 'bc', 'behen', 'behnchod', 'bkl', 'bhosad', 'bhosada',
-  'bhosdike', 'bhosdi', 'bsdk', 'bsdke', 'betichod', 'beti', 'betichodd',
-  'gandu', 'gand', 'gaand', 'gaandu', 'gandwe', 'gandfat', 'gandmasti',
-  'lodu', 'lode', 'loda', 'lavde', 'laude', 'lavda', 'lawde', 'lund', 'ling',
-  'randi', 'rand', 'raand', 'randwa', 'randi rona', 'randirona', 'randibaaz',
+  'madarchod', 'maderchod', 'mkc', 'maa ki chut',
+  'bhenchod', 'bahenchod', 'behnchod', 'bkl', 'bhosad', 'bhosada',
+  'bhosdike', 'bhosdi', 'bsdk', 'bsdke', 'betichod', 'betichodd',
+  'gandu', 'gaand', 'gaandu',
+  'lodu', 'lode', 'loda', 'lavde', 'laude', 'lavda', 'lawde', 'lund',
+  'randi', 'raand', 'randwa', 'randibaaz',
   'harami', 'haramzada', 'haramzadi', 'haraamkhor', 'haramkhor',
-  'kutta', 'kutte', 'kutiya', 'kutti', 'kuttiya',
+  'kutiya', 'kuttiya',
+  'kamina', 'kamine', 'kaminey',
+  'bhadwa', 'bhadwe', 'bhadva', 'bhadve', 'bhadvaa',
+  'dalla', 'dallal',
+  'chinal',
+  'teri maa', 'teri behen', 'maa chod',
+  
+  // Gujarati abusive words (romanized) - only explicit offensive terms
+  'gando', 'gandi', 'ganda', 'gande',
+  'bhadvo', 'bhadvi', 'bhadva',
+  'bhosdo', 'bhosdi', 'bhosda', 'bhosde',
+  'lavdo', 'lavdi', 'lavda', 'lavde', 'lodo', 'lodi',
+  'chodiyu', 'chodu', 'chodvi',
+  'randio', 'randi', 'rando',
+  
+  // Variations with numbers/symbols (only for major profanity)
+  'f*ck', 'f**k', 'fck', 'fuk', 'phuck', 'phuk',
+  'sh*t', 'sh!t', 'shyt', 'shet',
+  'b*tch', 'b!tch', 'biatch',
+  'a**hole', '@sshole',
+  'n1gger', 'n1gga',
+  
+  // Offensive harmful terms
+  'kill yourself', 'kys',
+  'kuttiya',
   'kamina', 'kamine', 'kamini', 'kaminey', 'kamino',
   'saala', 'sala', 'saale', 'saali', 'sali',
   'pela', 'pelu', 'jhaat', 'jhaant', 'jhatu', 'jhattu',
@@ -89,27 +109,29 @@ const createRegexPatterns = () => {
   };
   
   inappropriateWords.forEach(word => {
-    // Skip words that are just symbols or very short
-    if (word.length < 2) return;
+    // Skip words that are too short (< 4 chars) to avoid false positives
+    if (word.length < 4) {
+      // Only add short words if they're explicit variations
+      if (word.includes('*') || word.includes('@') || word.includes('!')) {
+        const escapedWord = escapeRegex(word);
+        patterns.push(new RegExp(`\\b${escapedWord}\\b`, 'gi'));
+      }
+      return;
+    }
     
-    // Exact match with escaped word
+    // Exact match with word boundaries - most reliable
     const escapedWord = escapeRegex(word);
     patterns.push(new RegExp(`\\b${escapedWord}\\b`, 'gi'));
     
-    // Match with special characters in between (only for words without special chars)
-    if (!/[^a-z0-9]/i.test(word)) {
-      const wordWithSpaces = word.split('').join('[\\s\\-_]*');
-      patterns.push(new RegExp(wordWithSpaces, 'gi'));
-      
-      // Match with numbers replacing letters (1=i, 3=e, 4=a, 5=s, 0=o, 7=t, 8=b)
+    // Only apply variations to longer explicit profanity (6+ chars) to avoid false positives
+    if (word.length >= 6 && !/[^a-z0-9]/i.test(word)) {
+      // Match with leetspeak/numbers for major words only
       const withNumbers = word
         .replace(/i/g, '[i1]')
         .replace(/e/g, '[e3]')
         .replace(/a/g, '[a4@]')
         .replace(/s/g, '[s5$]')
-        .replace(/o/g, '[o0]')
-        .replace(/t/g, '[t7]')
-        .replace(/b/g, '[b8]');
+        .replace(/o/g, '[o0]');
       patterns.push(new RegExp(`\\b${withNumbers}\\b`, 'gi'));
     }
   });
@@ -133,17 +155,6 @@ export const containsInappropriateContent = (text) => {
   for (const pattern of regexPatterns) {
     if (pattern.test(normalizedText)) {
       return true;
-    }
-  }
-  
-  // Check for repeated characters (common abuse pattern like "aaassss")
-  const repeatedPattern = /(.)\1{4,}/g;
-  if (repeatedPattern.test(normalizedText)) {
-    const withoutRepeated = normalizedText.replace(/(.)\1+/g, '$1');
-    for (const pattern of regexPatterns) {
-      if (pattern.test(withoutRepeated)) {
-        return true;
-      }
     }
   }
   
