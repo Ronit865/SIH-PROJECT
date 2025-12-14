@@ -78,7 +78,7 @@ const deleteJob = asyncHandler(async (req, res) => {
 });
 
 const getAllJobs = asyncHandler(async (req, res) => { 
-    const jobs = await Job.find();
+    const jobs = await Job.find().select('+applicants');
 
     return res
     .status(200)
