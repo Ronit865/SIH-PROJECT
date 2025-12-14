@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import User from '../models/user.model.js';
+import Email from '../models/email.model.js';
 
 // Create transporter
 const createTransporter = () => {
@@ -128,7 +129,7 @@ export const sendEmail = async (to, subject, body) => {
 };
 
 // Send bulk emails based on filter
-export const sendBulkEmail = async (subject, body, filter) => {
+export const sendBulkEmail = async (subject, body, filter, type = 'quick_message', sentBy = null) => {
     try {
         let query = {};
         
@@ -177,6 +178,23 @@ export const sendBulkEmail = async (subject, body, filter) => {
 
         const successCount = results.filter(r => r.success).length;
         const failedCount = results.filter(r => !r.success).length;
+
+        // Save email record to database
+        try {
+            const emailRecord = new Email({
+                to: filter || 'all',
+                subject,
+                body,
+                type,
+                totalSent: successCount,
+                totalFailed: failedCount,
+                status: failedCount === 0 ? 'sent' : (successCount === 0 ? 'failed' : 'partial'),
+                sentBy
+            });
+            await emailRecord.save();
+        } catch (dbError) {
+            console.error('Error saving email record to database:', dbError);
+        }
 
         return {
             success: true,

@@ -4,7 +4,7 @@ const emailSchema = new mongoose.Schema({
     // all Alumni/Donor/Users
     to: {
         type: String,
-        enum: ['Alumni', 'Donor', 'Student', 'All'],
+        enum: ['alumni', 'donor', 'student', 'all'],
         required: true,
     },
     subject: {
@@ -14,6 +14,28 @@ const emailSchema = new mongoose.Schema({
     body: {
         type: String,
         required: true,
+    },
+    type: {
+        type: String,
+        enum: ['quick_message', 'event', 'job', 'donation', 'announcement'],
+        default: 'quick_message',
+    },
+    totalSent: {
+        type: Number,
+        default: 0,
+    },
+    totalFailed: {
+        type: Number,
+        default: 0,
+    },
+    status: {
+        type: String,
+        enum: ['sent', 'failed', 'partial'],
+        default: 'sent',
+    },
+    sentBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
 },{timestamps: true});
 
