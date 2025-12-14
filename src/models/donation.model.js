@@ -6,6 +6,10 @@ const donationSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    description: {
+        type: String,
+        default: ""
+    },
     goal: {
         type: Number,
         required: true,
@@ -13,6 +17,13 @@ const donationSchema = new mongoose.Schema({
     raisedAmount: {
         type: Number,
         default: 0,
+    },
+    endDate: {
+        type: Date,
+    },
+    category: {
+        type: String,
+        default: ""
     },
     donors: [
         {
