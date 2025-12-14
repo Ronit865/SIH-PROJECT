@@ -137,6 +137,30 @@ const jobApply = asyncHandler(async (req, res) => {
 
 });
 
+const jobUnapply = asyncHandler(async (req, res) => {
+
+    const userId = req.user.id;
+
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+        throw new ApiError(404, 'Job not found');
+    }
+
+    if (!job.applicants.includes(userId)){
+        throw new ApiError(400, 'You have not applied for this job');
+    }
+
+    // Remove userId from applicants array
+    job.applicants = job.applicants.filter(applicantId => applicantId.toString() !== userId);
+    await job.save();
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, 'Application withdrawn successfully', job));
+
+});
+
 const jobApplicants = asyncHandler(async (req, res) => {
 
     const { id } = req.params;
@@ -174,6 +198,7 @@ export {
     getAllJobs,
     verifyJob,
     jobApply,
+    jobUnapply,
     jobApplicants,
     getMyPostedJobs,
     jobRejectByAdmin

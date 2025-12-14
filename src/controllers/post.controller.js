@@ -6,6 +6,7 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { uploadOnCloudinary, deleteFromCloudinary, extractPublicId } from '../utils/cloudinary.js';
 import { containsInappropriateContent } from '../utils/contentFilter.js';
+import { createNotification } from './notification.controller.js';
 
 // Create a new post
 const createPost = asyncHandler(async (req, res) => {
@@ -222,6 +223,16 @@ const upvotePost = asyncHandler(async (req, res) => {
       post.downvotedBy = post.downvotedBy.filter(id => id.toString() !== userId.toString());
       post.downvotes = Math.max(0, post.downvotes - 1);
     }
+
+    // Create notification for post author (only when adding upvote, not removing)
+    await createNotification({
+      recipient: post.author,
+      sender: userId,
+      type: 'upvote',
+      title: `${req.user.name} upvoted your post`,
+      message: post.content.substring(0, 100),
+      postId: post._id
+    });
   }
 
   await post.save();
