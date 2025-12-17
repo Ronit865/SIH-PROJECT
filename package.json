@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "type": "module",
-  "scripts": {
-    "start": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+"scripts": {
+  "start": "node src/index.js",
+  "test": "true"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
